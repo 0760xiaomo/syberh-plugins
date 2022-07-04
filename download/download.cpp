@@ -79,11 +79,11 @@ void Download::start(const QString &callbackId, const QString &url, const QStrin
     globalCallbackID = callbackId.toLong();
 
     // 检查网络
-    if (!Validator::isNetworkConnected()) {
-        signalManager()->failed(globalCallbackID, ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
-        globalCallbackID = 0;
-        return;
-    }
+//    if (!Validator::netWorkConnected()) {
+//        signalManager()->failed(globalCallbackID, ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
+//        globalCallbackID = 0;
+//        return;
+//    }
 
     QString downloadName = name;
     if (name.isEmpty()) {
@@ -120,7 +120,9 @@ void Download::start(const QString &callbackId, const QString &url, const QStrin
     taskInfo->downloadManager = downloadManager;
     tasks.insert(callbackId, taskInfo);
 
-    QString basePath = getDownloadPath(downloadManager->getStorage());
+    //QString basePath = getDownloadPath(downloadManager->getStorage());
+    //文件下载到的位置
+    QString basePath = storage;
     QString path = basePath + "/" + downloadName;
 
     // 判断当前文件是否重复，如果重复名称添加序号
@@ -166,7 +168,7 @@ void Download::cancel(const QString &callbackId, const QString &downloadID) {
         return;
     }
     if (!tasks.contains(downloadID)) {
-        signalManager()->failed(globalCallbackID, ErrorInfo::InvalidCall, "任务不存在或已完成");
+        signalManager()->failed(globalCallbackID, ErrorInfo::CannelFailed, ErrorInfo::message(ErrorInfo::CannelFailed, "任务不存在或已完成"));
         globalCallbackID = 0;
         return;
     }

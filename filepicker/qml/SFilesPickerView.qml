@@ -135,6 +135,8 @@ Rectangle {
             } else {
                 // 文件夹
                 filesPicker.dirPath = filesPicker.getDirPath();
+                pageStack.pop();
+                filesPicker.ok(JSON.stringify({"files": filesPicker.getDirPath()}));
             }
         }
 
