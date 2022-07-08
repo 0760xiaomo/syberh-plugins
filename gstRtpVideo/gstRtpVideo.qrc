@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/SGstRtpVideo.qml</file>
+    </qresource>
+</RCC>
