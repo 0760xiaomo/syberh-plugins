@@ -23,7 +23,7 @@ void Record::invokeInitialize()
     historydata = new HistoryData();
 }
 
-void Record::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Record::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -42,7 +42,7 @@ void Record::invoke(QString callbackID, QString actionName, QVariantMap params)
     }
 }
 
-void Record::list(QString callbackID,QVariantMap params){
+void Record::list(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "list" << params << endl;
 
     //从数据库中获取录音列表
@@ -55,7 +55,7 @@ void Record::list(QString callbackID,QVariantMap params){
     }
 }
 
-void Record::start(QString callbackID,QVariantMap params){
+void Record::start(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "start" << params << endl;
 
     //获取用户文件存储地址
@@ -70,7 +70,19 @@ void Record::start(QString callbackID,QVariantMap params){
     int timeT = time.toTime_t();                     //将当前时间转为时间戳
     QString timeStr = time.toString("yyyyMMdd");
 
-    QString newFile = path + "/" +  timeStr + "_" + QString::number(timeT) + ".wav"; 
+    QString format = params.value("format").toString();
+
+    if (format == "aac") {
+        format = "aac";
+    } else if (format == "mp3") {
+        format = "mp3";
+    } else {
+        format = "wav";
+    }
+
+    qDebug() << Q_FUNC_INFO << format << "####format####";
+
+    QString newFile = path + "/" +  timeStr + "_" + QString::number(timeT) + "." + format;
     currPath = newFile;
     QFile file(newFile);
 
@@ -92,7 +104,7 @@ void Record::start(QString callbackID,QVariantMap params){
         audioInput->deleteLater();
         audioInput = nullptr;
     }
-    audioInput = new AudioInput(this);
+    audioInput = new AudioInput(params, this);
     audioInput->setFilePath(newFile);
     audioInput->record();
 
@@ -113,7 +125,7 @@ void Record::start(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(jsonObject));
 }
 
-void Record::pause(QString callbackID,QVariantMap params){
+void Record::pause(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "pause" << params << endl;
     if(audioInput == nullptr){
         signalManager()->failed(callbackID.toLong(), ErrorInfo::SystemError, "系统错误:录音不存在");
@@ -123,7 +135,7 @@ void Record::pause(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Record::resume(QString callbackID,QVariantMap params){
+void Record::resume(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "resume" << params << endl;
     if(audioInput == nullptr){
         signalManager()->failed(callbackID.toLong(), ErrorInfo::SystemError, "系统错误:录音不存在");
@@ -134,7 +146,7 @@ void Record::resume(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Record::stop(QString callbackID, QVariantMap params){
+void Record::stop(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "stop" << params << endl;
 
     if(audioInput == nullptr){
@@ -155,7 +167,7 @@ void Record::stop(QString callbackID, QVariantMap params){
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Record::remove(QString callbackID, QVariantMap params){
+void Record::remove(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "remove" << params << endl;
     QString filePath = params.value("path").toString();
 

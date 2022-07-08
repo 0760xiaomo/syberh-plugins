@@ -18,8 +18,8 @@ public:
     virtual ~FilePreviewPrivate();
 
     void reset();
-    void previewTxt(QString &callbackID, QVariantMap &params);
-    void previewVideo(QString &callbackID, QVariantMap &params);
+    void previewTxt(const QString &callbackID, const QVariantMap &params);
+    void previewVideo(const QString &callbackID, const QVariantMap &params);
 
     bool hasError() {return m_hasError;}
     ErrorInfo::ErrorCode error() {return m_errorCode;}

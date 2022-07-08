@@ -14,7 +14,7 @@ Battery::Battery()
 }
 
 
-void Battery::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Battery::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -23,7 +23,7 @@ void Battery::invoke(QString callbackID, QString actionName, QVariantMap params)
     getStatus(callbackID, params);
 }
 
-void Battery::getStatus(QString callbackID,QVariantMap params){
+void Battery::getStatus(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(params);
 
     CBatteryManager battery;

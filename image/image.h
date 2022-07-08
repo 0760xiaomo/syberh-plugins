@@ -18,12 +18,18 @@ class IMAGESHARED_EXPORT Image: public ExtensionSystem::IPlugin
 public:
     Q_INVOKABLE Image();
 
-    void invoke(QString callbackID, QString action, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &action, const QVariantMap &params);
 
-    void chooseImage(QString callbackID, QVariantMap params);
-    void previewImage(QString callbackID, QVariantMap params);
+    void chooseImage(const QString &callbackID, const QVariantMap &params);
+    void previewImage(const QString &callbackID, const QVariantMap &params);
     //base64 转 QImage
-    QImage base64ToImg(const QString& str);
+    QImage* base64ToImg(const QString &str);
+
+    /**
+     * @brief getFileName 拼接新的图片名
+     * @return 成功则返回图片的绝对路径
+     */
+    QString getFileName(const QVariantMap &params);
 
 private:
     QmlManager qmlManager;
@@ -31,16 +37,28 @@ private:
     QmlObject *previewQml;
     long globalCallbackID;
 
+    /**
+     * @brief saveImageToPhotosAlbum 保存图片到相册
+     * @param callBackID 唤起应用的任务Id
+     */
+    void saveImageToPhotosAlbum(const QString &callbackID, const QVariantMap &params);
 
     /**
-     * @brief openUrl 唤起应用,打开页面
+     * @brief saveImage 保存图片文件
      * @param callBackID 唤起应用的任务Id
      * @param filePath 文件路径
-     * @return 成功则发送成功信号。
+     * @return 成功则返回图片路径。
      *      失败则发送失败信号。
      */
-    void saveImageToPhotosAlbum(QString callbackID, QVariantMap params);
+    void saveImage(const QString &callbackID, const QVariantMap &params);
 
+    /**
+     * @brief saveBase64Image 保存base64格式的图片
+     * @param callBackID 唤起应用的任务Id
+     * @return 成功则返回图片路径。
+     *      失败则发送失败信号。
+     */
+    void saveBase64Image(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief getImageInfo 获取图片的详细
@@ -48,12 +66,12 @@ private:
      * @return 成功则发送成功信号。
      *      失败则发送失败信号。
      */
-    void getImageInfo(QString callbackID, QVariantMap params);
+    void getImageInfo(const QString &callbackID, const QVariantMap &params);
 
 public slots:
     void chooseCancel();
-    void receiveUrls(QString filesPath);
-    void cameraSuccess(QString filePath);
+    void receiveUrls(const QString &filesPath);
+    void cameraSuccess(const QString &filePath);
     void cameraCancel();
     void albumCancel();
     void previewImageSuccess();

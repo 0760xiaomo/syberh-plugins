@@ -15,14 +15,14 @@ class PACKAGESSHARED_EXPORT Packages: public ExtensionSystem::IPlugin
 public:
     Packages();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
     /**
      * @brief openByUrl 被应用唤起
      * @param url 路径
      * @return 成功则发送订阅信号
      */
-    void openByUrl(QString url);
+    void openByUrl(const QString &url);
 
     /**
      * @brief openByDocument 被应用唤起
@@ -31,7 +31,7 @@ public:
      * @param filePath 文件路径
      * @return 成功则发送订阅信号
      */
-    void openByDocument(QString action, QString mimetype, QString filePath);
+    void openByDocument(const QString &action, const QString &mimetype, const QString &filePath);
 
 private :
 
@@ -44,7 +44,7 @@ private :
      * @return 成功则发送成功信号。
      *      成功则发送成功信号。
      */
-    void openUrl(QString callbackID, QString scheme, QString path, QVariantMap params);
+    void openUrl(const QString &callbackID, const QString &scheme, const QString &path, const QVariantMap &params);
 
     /**
      * @brief openPage 根据路径打开页面
@@ -55,7 +55,7 @@ private :
      * @return 成功则发送成功信号。
      *      成功则发送成功信号。
      */
-    void openPage(QString callbackID, QString scheme, QString path, QVariantMap params);
+    void openPage(const QString &callbackID, const QString &scheme, const QString &path, const QVariantMap &params);
 
     /**
      * @brief openDocument 唤起应用,打开页面,处理文档
@@ -66,8 +66,8 @@ private :
      * @return 成功则发送成功信号。
      *      成功则发送成功信号。
      */
-    void openDocument(QString callbackID, QString sopId, QString uiappId,
-                      QString action, QString path, QVariantMap params);
+    void openDocument(const QString &callbackID, const QString &sopId, const QString &uiappId,
+                      const QString &action, const QString &path, const QVariantMap &params);
 
     /**
      * @brief convertParamToUrl 将参数拼接到url中
@@ -75,7 +75,7 @@ private :
      * @param params 参数
      * @return
      */
-    QString convertParamToUrl(QString url, QVariantMap paramMap);
+    QString convertParamToUrl(const QString &url, const QVariantMap &paramMap);
 
     /**
      * @brief parseUrlToParam 解析url问号后的参数到params里
@@ -83,7 +83,7 @@ private :
      * @param params 参数
      * @return 返回map
      */
-    QVariantMap parseUrlToParam(QString url, QVariantMap paramMap);
+    QVariantMap parseUrlToParam(const QString &url, QVariantMap paramMap);
 
 };
 

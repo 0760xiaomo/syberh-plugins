@@ -8,7 +8,7 @@ Modal::Modal()
 }
 
 
-void Modal::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Modal::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -26,7 +26,7 @@ void Modal::invoke(QString callbackID, QString actionName, QVariantMap params)
 }
 
 
-void Modal::alert(QString callbackID, QVariantMap params)
+void Modal::alert(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << callbackID << "params" << params;
     globalCallbackID = callbackID.toLong();
@@ -74,7 +74,7 @@ void Modal::alertSuccess()
     globalCallbackID = 0;
 }
 
-void Modal::confirm(QString callbackID, QVariantMap params)
+void Modal::confirm(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << callbackID << "params" << params;
     globalCallbackID = callbackID.toLong();
@@ -133,7 +133,7 @@ void Modal::confirmReject()
 }
 
 
-void Modal::prompt(QString callbackID, QVariantMap params)
+void Modal::prompt(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << callbackID << "params" << params;
     globalCallbackID = callbackID.toLong();
@@ -164,7 +164,7 @@ void Modal::prompt(QString callbackID, QVariantMap params)
     qmlManager.call(promptQml, "show()");
 }
 
-void Modal::promptAccepted(QVariant value)
+void Modal::promptAccepted(const QVariant &value)
 {
     signalManager()->success(globalCallbackID, value);
     qmlManager.destroy(promptQml);
@@ -179,7 +179,7 @@ void Modal::promptCancel()
 }
 
 
-void Modal::toast(QString callbackID, QVariantMap params)
+void Modal::toast(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << callbackID << "params" << params;
 
@@ -192,6 +192,10 @@ void Modal::toast(QString callbackID, QVariantMap params)
         return;
     }
 
+    if(toastQml != nullptr){
+        qmlManager.destroy(toastQml);
+        toastQml = nullptr;
+    }
     toastQml = qmlManager.create("qrc:/qml/SToast.qml", qmlManager.currentItem());
 
     QVariant result = qmlManager.call(toastQml, "show('"+ title + "','" + icon + "','" + duration +"')");
@@ -206,7 +210,7 @@ void Modal::toast(QString callbackID, QVariantMap params)
 }
 
 
-void Modal::gtoast(QString callbackID, QVariantMap params)
+void Modal::gtoast(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << callbackID << "params" << params;
 

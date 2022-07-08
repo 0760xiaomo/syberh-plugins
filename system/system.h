@@ -15,7 +15,7 @@ class SYSTEMSHARED_EXPORT System : public ExtensionSystem::IPlugin
 public:
     System();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
     // signal manager
@@ -28,7 +28,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void  aboutPhone(QString callbackID,QVariantMap params);
+    void  aboutPhone(const QString &callbackID, const QVariantMap &params);
 
      /**
      * @brief setDate 设置系统时间
@@ -37,16 +37,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void  setDate(QString callbackID,QVariantMap params);
-
-     /**
-     * @brief setVirtualPanel 设置虚拟按键显示隐藏
-     * @param callBackID 任务Id
-     * @param params 参数
-     * @return 成功则无返回。
-     *      失败则返回错误码。
-     */
-    void  setVirtualPanel(QString callbackID,QVariantMap params);
+    void  setDate(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief getResolution 获取手机分辨率
@@ -55,7 +46,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void  getResolution(QString callbackID,QVariantMap params);
+    void  getResolution(const QString &callbackID, const QVariantMap &params);
 
    /**
     * @brief getCoreVersion 获取内核版本号
@@ -64,7 +55,7 @@ private :
     * @return 成功则无返回。
     *      失败则返回错误码。
     */
-   void  getCoreVersion(QString callbackID,QVariantMap params);
+   void  getCoreVersion(const QString &callbackID, const QVariantMap &params);
 
    /**
     * @brief getSysVersionID 获取系统版本号
@@ -73,7 +64,7 @@ private :
     * @return 成功则无返回。
     *      失败则返回错误码。
     */
-   void  getSysVersionID(QString callbackID,QVariantMap params);
+   void  getSysVersionID(const QString &callbackID, const QVariantMap &params);
   
   /**
      * @brief 截屏
@@ -82,7 +73,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void  captureScreen(QString callbackID,QVariantMap params);
+    void  captureScreen(const QString &callbackID, const QVariantMap &params);
 };
 
 #endif // SYSTEM_H

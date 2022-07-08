@@ -1,17 +1,19 @@
 #include "audioinput.h"
 #include <QDebug>
 
-#define _CHANNEL_COUNT 1 
-#define _SAMPLE_RATE 8000 
+#define _CHANNEL_COUNT 1
+#define _SAMPLE_RATE 8000
 #define _SAMPLE_BITS 16
 
-AudioInput::AudioInput(QObject *parent): QObject(parent)
+AudioInput::AudioInput(QVariantMap params, QObject *parent): QObject(parent)
 {
-    // Set up the desired format, for example:
-
-    format.setSampleRate(_SAMPLE_RATE);
-    format.setChannelCount(_CHANNEL_COUNT);
-    format.setSampleSize(_SAMPLE_BITS);
+    int sampleRate = params.value("sampleRate").toInt();
+    int sampleSize = params.value("sampleSize").toInt();
+    int numberOfChannels = params.value("numberOfChannels").toInt();
+    qDebug() << Q_FUNC_INFO << "###sampleRate##" << sampleRate << sampleSize << numberOfChannels;
+    format.setSampleRate(sampleRate | _SAMPLE_RATE);
+    format.setChannelCount(numberOfChannels | _CHANNEL_COUNT);
+    format.setSampleSize(sampleSize | _SAMPLE_BITS);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::SignedInt);
@@ -24,7 +26,6 @@ AudioInput::AudioInput(QObject *parent): QObject(parent)
     format.setCodec(info.supportedCodecs().at(0));
     audio = new QAudioInput(format, this);
     connect(audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)));
-
 }
 AudioInput::~AudioInput(){
     delete audio;

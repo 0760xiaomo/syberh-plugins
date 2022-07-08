@@ -15,7 +15,7 @@ class BATTERYSHARED_EXPORT Battery : public ExtensionSystem::IPlugin
 public:
     Battery();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
     /**
@@ -25,7 +25,7 @@ private :
      * @return 成功则返回当前设备的电量信息及是否在充电。
      * @return 失败则返回错误码。
      */
-    void  getStatus(QString callbackID, QVariantMap params);
+    void  getStatus(const QString &callbackID, const QVariantMap &params);
 };
 
 #endif // BATTERY_H

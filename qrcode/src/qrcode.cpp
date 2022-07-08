@@ -26,7 +26,7 @@ void Qrcode::invokeInitialize()
     qrcode.init(m_view);
 }
 
-void Qrcode::invoke(QString callbackID, QString action, QVariantMap params)
+void Qrcode::invoke(const QString &callbackID, const QString &action, const QVariantMap &params)
 {
     Q_UNUSED(params)
 
@@ -35,7 +35,7 @@ void Qrcode::invoke(QString callbackID, QString action, QVariantMap params)
     }
 }
 
-void Qrcode::decodeFinished(QString decodeContent)
+void Qrcode::decodeFinished(const QString &decodeContent)
 {
     QJsonObject json;
     json.insert("result", decodeContent);
@@ -47,7 +47,7 @@ void Qrcode::cancel()
     signalManager()->success(d->callbackID.toLong(), QVariant());
 }
 
-void Qrcode::scan(QString callbackID)
+void Qrcode::scan(const QString &callbackID)
 {
     d->callbackID = callbackID;
 

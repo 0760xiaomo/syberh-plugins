@@ -9,7 +9,7 @@ NetworkInfo::NetworkInfo()
 }
 
 
-void NetworkInfo::invoke(QString callbackID, QString actionName, QVariantMap params)
+void NetworkInfo::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -18,7 +18,7 @@ void NetworkInfo::invoke(QString callbackID, QString actionName, QVariantMap par
     }
 }
 
-void NetworkInfo::info(QString callbackID,QVariantMap params){
+void NetworkInfo::info(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(params);
 
     CNetworkManager network;

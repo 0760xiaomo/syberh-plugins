@@ -12,7 +12,7 @@ Cellular::Cellular()
 }
 
 
-void Cellular::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Cellular::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -23,7 +23,7 @@ void Cellular::invoke(QString callbackID, QString actionName, QVariantMap params
     }
 }
 
-void Cellular::networkDisabled(QString callbackID,QVariantMap params){
+void Cellular::networkDisabled(const QString &callbackID, const QVariantMap &params){
 
     qDebug() << "NetworkSetCellularEnabled callbackID is" << callbackID << "params is" << params << endl;
 
@@ -42,7 +42,7 @@ void Cellular::networkDisabled(QString callbackID,QVariantMap params){
 }
 
 
-void Cellular::networkEnabled(QString callbackID,QVariantMap params){
+void Cellular::networkEnabled(const QString &callbackID, const QVariantMap &params){
 
     qDebug() << "NetworkSetCellularEnabled callbackID is" << callbackID << "params is" << params << endl;
 

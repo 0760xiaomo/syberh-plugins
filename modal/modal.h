@@ -18,29 +18,29 @@ class MODALSHARED_EXPORT Modal: public ExtensionSystem::IPlugin
 public:
     Q_INVOKABLE Modal();
 
-    void invoke(QString callbackID, QString action, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &action, const QVariantMap &params);
 
-    void alert(QString callbackID, QVariantMap params);
-    void confirm(QString callbackID, QVariantMap params);
-    void prompt(QString callbackID, QVariantMap params);
-    void toast(QString callbackID, QVariantMap params);
-    void gtoast(QString callbackID, QVariantMap params);
+    void alert(const QString &callbackID, const QVariantMap &params);
+    void confirm(const QString &callbackID, const QVariantMap &params);
+    void prompt(const QString &callbackID, const QVariantMap &params);
+    void toast(const QString &callbackID, const QVariantMap &params);
+    void gtoast(const QString &callbackID, const QVariantMap &params);
 
 
 private:
     long globalCallbackID;
     QmlManager qmlManager;
-    QmlObject *alertQml;
-    QmlObject *confirmQml;
-    QmlObject *promptQml;
-    QmlObject *toastQml;
+    QmlObject *alertQml = nullptr;
+    QmlObject *confirmQml = nullptr;
+    QmlObject *promptQml = nullptr;
+    QmlObject *toastQml = nullptr;
 
 
 public slots:
     void alertSuccess();
     void confirmSuccess();
     void confirmReject();
-    void promptAccepted(QVariant value);
+    void promptAccepted(const QVariant &value);
     void promptCancel();
 };
 

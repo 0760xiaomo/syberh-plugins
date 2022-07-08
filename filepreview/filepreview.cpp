@@ -37,7 +37,7 @@ void FilePreviewPrivate::cleanError()
     m_errorString = QString();
 }
 
-void FilePreviewPrivate::previewTxt(QString &callbackID, QVariantMap &params)
+void FilePreviewPrivate::previewTxt(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "callbackID:" << callbackID << " params" << params;
     m_callbackID = callbackID;
@@ -92,7 +92,7 @@ void FilePreviewPrivate::slotPreviewTxt()
 }
 
 
-void FilePreviewPrivate::previewVideo(QString &callbackID, QVariantMap &params)
+void FilePreviewPrivate::previewVideo(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "callbackID:" << callbackID << " params" << params;
     m_callbackID = callbackID;
@@ -156,7 +156,7 @@ FilePreview::FilePreview()
     qmlRegisterType<TextEditor>("textEditor", 1, 0, "TextEditor");
 }
 
-void FilePreview::invoke(QString callbackID, QString actionName, QVariantMap params)
+void FilePreview::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
     d->reset();

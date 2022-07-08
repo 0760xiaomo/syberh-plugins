@@ -15,10 +15,10 @@ class CLIPBOARDSHARED_EXPORT Clipboard: public ExtensionSystem::IPlugin
 public:
     Q_INVOKABLE Clipboard();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
     
-    void setClipboardData(QString callbackID,QVariantMap params);
-    void getClipboardData(QString callbackID,QVariantMap params);
+    void setClipboardData(const QString &callbackID, const QVariantMap &params);
+    void getClipboardData(const QString &callbackID, const QVariantMap &params);
   
 };
 

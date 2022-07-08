@@ -4,17 +4,18 @@
 #
 #-------------------------------------------------
 
-QT       += gui widgets quick qml
+QT       += gui widgets quick qml dbus
 
-TARGET = app
+TARGET = application
 TEMPLATE = lib
 
-DEFINES += APP_LIBRARY
+DEFINES += APPLICATION_LIBRARY
 
-SOURCES += app.cpp
+SOURCES += application.cpp
 
-HEADERS += app.h\
-        app_global.h
+HEADERS += application.h\
+        application_p.h \
+        application_global.h
 
 
 CONFIG += link_pkgconfig

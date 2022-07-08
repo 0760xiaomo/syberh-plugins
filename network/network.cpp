@@ -4,183 +4,188 @@
 #include <QJsonObject>
 #include <QNetworkReply>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include "framework/common/errorinfo.h"
 #include "util/validator.h"
+#include "util/util.h"
+
+
+#define NETWORK_CHECK_PARAM(params, name, callbackID, msg) \
+    if(!NativeSdk::Util::CheckParam(params, name)) { \
+        signalManager()->failed(callbackID.toLong(), NativeSdk::ErrorInfo::InvalidParameter, msg); \
+        return; \
+    }
+
 
 using namespace NativeSdk;
 
-Network::Network()
+// ===== NetworkTasks
+class NetworkTasks
+{
+public:
+    NetworkTasks() = default;
+    virtual ~NetworkTasks();
+
+    NetworkPrivate* get(const QString &callbackID);
+    void add(const QString &callbackID, NetworkPrivate *private_);
+    void remove(const QString &callbackID);
+    void clear();
+private:
+    // key: callbackID
+    QMap<QString, NetworkPrivate*> m_tasks;
+    Q_DISABLE_COPY(NetworkTasks)
+};
+
+
+// ===== Network
+
+Network::Network() : m_networkTasks(new NetworkTasks)
 {
 }
 
 Network::~Network()
 {
-  delete manager;
+    if(!m_networkTasks.isNull()){
+        m_networkTasks->clear();
+    }
 }
 
-void Network::invokeInitialize()
+
+bool checkParam(const QVariantMap &params, const QString &paramName)
 {
-    manager = new QNetworkAccessManager(this);
-    connect(manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(finished(QNetworkReply *)));
+    QVariant var = params.value(paramName);
+    if(var.isNull() || !var.isValid()){
+        return false;
+    }
+    return true;
 }
 
-void Network::invoke(QString callbackID, QString actionName, QVariantMap params)
+
+void Network::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
-    qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
+    qDebug() << Q_FUNC_INFO << "callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
     // 检查网络
-    if (!Validator::netWorkConnected()) {
-        signalManager()->failed(callbackID.toLong(), ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
-        return;
-    }
+    // if (!Validator::netWorkConnected()) {
+    //     signalManager()->failed(callbackID.toLong(), ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
+    //     return;
+    // }
 
-    qDebug() << Q_FUNC_INFO << "NetWork callbackID is" << callbackID << "actionName is" << actionName << "params is" << params << endl;
+    NETWORK_CHECK_PARAM(params, "url", callbackID, "URL为空")
+    NETWORK_CHECK_PARAM(params, "method", callbackID, "method为空")
 
     QString url = params.value("url").toString();
     QString method = params.value("method").toString();
-    if (method == "") {
-        qDebug() << Q_FUNC_INFO << "params type is null, set default values: get callbackID is " << callbackID << endl;
-        method = "get";
-    }
-
-    //检查url
-    if (!Validator::isHttpUrl(url)) {
-        qDebug() << "url parameter is not starts with http or https: " << params << endl;
-        signalManager()->failed(callbackID.toLong(), ErrorInfo::InvalidParameter, ErrorInfo::message(ErrorInfo::InvalidParameter, "URL无效"));
-        return;
-    }
-
-
     QString dataType = params.value("dataType").toString();
-    if (dataType == "") {
-        dataType = "json";
-    }
-
-    if (dataType.toLower() != "json" && dataType.toLower() != "text") {
-        signalManager()->failed(callbackID.toLong(), ErrorInfo::InvalidParameter, ErrorInfo::message(ErrorInfo::InvalidParameter, "dataType"));
-        return;
-    }
-
-    QNetworkRequest request;
-
-    QString urlAddr = url.toLower();
-    if (urlAddr.startsWith("https")) {
-        QSslConfiguration config;
-        config.setPeerVerifyMode(QSslSocket::VerifyNone);
-        config.setProtocol(QSsl::UnknownProtocol);
-        request.setSslConfiguration(config);
-    }
-
     QVariantMap headers = params.value("header").toMap();
+    QVariant cookiesVar = params.value("cookie");
+    QVariant dataVar = params.value("data");
 
-    qDebug() << Q_FUNC_INFO << "header is " << headers << endl;
+    NetworkPrivate* private_ = NetworkPrivate::New(callbackID);
+    m_networkTasks->add(callbackID, private_);    // add task
 
-    QVariantMap::Iterator headerIt = headers.begin();
-    while (headerIt != headers.end()) {
-        request.setRawHeader(headerIt.key().toUtf8(), headerIt.value().toString().toUtf8());
-        headerIt++;
+    private_->setUrl(url)->setMethod(method)->setHeaders(headers)->setDataType(dataType);
+
+    if(cookiesVar.canConvert<QVariantMap>()){
+        private_->setCookies(cookiesVar.toMap());
+    }else if(cookiesVar.canConvert<QString>()){
+        private_->setCookies(cookiesVar.toString());
     }
-    if (!headers.contains("Content-Type")) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+    if(dataVar.canConvert<QVariantMap>()){
+        private_->setData(dataVar.toMap());
+    }else if(dataVar.canConvert<QString>()){
+        private_->setData(dataVar.toString());
     }
 
-    request.setUrl(url);
+    connect(private_, &NetworkPrivate::error, this, &Network::error);
+    connect(private_, &NetworkPrivate::finished, this, &Network::finished);
 
-    QNetworkReply *reply;
-
-    if ("get" == method.toLower()) {
-        reply = manager->get(request);
-    } else if ("post" == method.toLower()) {
-        QVariantMap data = params.value("data").toMap();
-        QVariantMap::Iterator it = data.begin();
-        QString content;
-        while (it != data.end()) {
-            content.append(it.key()).append("=").append(it.value().toString());
-            it++;
-            if (it != data.end()) {
-                content.append("&");
-            }
-        }
-        reply = manager->post(request, content.toUtf8());
-    } else if ("put" == method.toLower()) {
-        QVariantMap data = params.value("data").toMap();
-        QVariantMap::Iterator it = data.begin();
-        QString content;
-        while (it != data.end()) {
-            content.append(it.key()).append("=").append(it.value().toString());
-            it++;
-            if (it != data.end()) {
-                content.append("&");
-            }
-        }
-        reply = manager->put(request, content.toUtf8());
-    } else if ("delete" == method.toLower()) {
-        reply = manager->deleteResource(request);
-    } else {
-        signalManager()->failed(callbackID.toLong(), ErrorInfo::InvalidParameter, ErrorInfo::message(ErrorInfo::InvalidParameter, "type"));
+    private_->request();
+    if(private_->hasError()){
+        error(callbackID, private_->getError());
         return;
     }
-
-    TaskInfo *taskInfo = new TaskInfo();
-    taskInfo->dataType = dataType;
-    taskInfo->reply = reply;
-
-    tasks[callbackID] = taskInfo;
 }
 
-void Network::finished(QNetworkReply *reply)
+void Network::finished(const QString &callbackID, const NetworkResponse &response)
 {
-  qDebug() << Q_FUNC_INFO << endl;
+    qDebug() << Q_FUNC_INFO;
 
-  QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    QJsonObject result;
+    result.insert("statusCode", response.statusCode);
+    result.insert("header", response.headerJson());
+    result.insert("cookie", response.cookieJson());
 
-  qDebug() << Q_FUNC_INFO << " statusCode: " << statusCode.toString() << " error: " << reply->error() << endl;
-
-  QJsonObject headers;
-
-  QList<QPair<QByteArray, QByteArray>> ls = reply->rawHeaderPairs();
-  for (qint64 i = 0; i < ls.size(); i++) {
-    QByteArray key = ls.at(i).first;
-    QByteArray val = ls.at(i).second;
-    headers.insert(QString(key), QString(val));
-  }
-
-  QString result = QString(reply->readAll());
-
-  qDebug() << Q_FUNC_INFO << " result: " << result << " url:" << reply->url().url() << endl;
-
-  QString callbackID;
-  QString datatype;
-
-  QMap<QString, TaskInfo *>::Iterator it = tasks.begin();
-  while (it != tasks.end()) {
-    TaskInfo *taskInfo = it.value();
-    if (taskInfo->reply == reply) {
-      callbackID = it.key();
-      datatype = taskInfo->dataType;
-      tasks.remove(it.key());
-      delete taskInfo;
-      taskInfo = NULL;
-      break;
+    switch (response.dataType) {
+    case NetworkPrivate::JSON:
+            result.insert("data", response.bodyJson());
+            break;
+    case NetworkPrivate::TEXT:
+            result.insert("data", response.body);
+            break;
+    default:
+            result.insert("data", QJsonValue());
+            break;
     }
-    it++;
-  }
+    m_networkTasks->remove(callbackID);   // remove task
+    signalManager()->success(callbackID.toLong(), result);
+}
 
-  if (QNetworkReply::NoError == reply->error()) {
-    QJsonObject json;
-    json.insert("statusCode", statusCode.toString());
-    json.insert("header", headers);
-    if (datatype.toLower() == "json") {
-      json.insert("data", QJsonDocument::fromJson(result.toLocal8Bit().data()).object());
-      signalManager()->success(callbackID.toLong(), json);
-    } else {
-      json.insert("data", result);
-      signalManager()->success(callbackID.toLong(), json);
+
+void Network::error(const QString &callbackID, const QString &err)
+{
+    m_networkTasks->remove(callbackID);   // remove task
+    signalManager()->failed(callbackID.toLong(), ErrorInfo::SystemError, err);
+}
+
+
+// ====== NetworkTasks
+
+NetworkTasks::~NetworkTasks()
+{
+    clear();
+}
+
+NetworkPrivate* NetworkTasks::get(const QString &callbackID)
+{
+    return m_tasks.value(callbackID);
+}
+
+void NetworkTasks::add(const QString &callbackID, NetworkPrivate *private_)
+{
+    if(!private_){
+        return;
     }
-  } else {
-    qDebug() << Q_FUNC_INFO << " result error " << endl;
-    signalManager()->failed(callbackID.toLong(), ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, reply->errorString()));
-  }
+    if(m_tasks.contains(callbackID)){
+        remove(callbackID);
+    }
+    m_tasks.insert(callbackID, private_);
+}
 
-  reply->deleteLater();
+void NetworkTasks::remove(const QString &callbackID)
+{
+    NetworkPrivate* private_ = m_tasks.value(callbackID);
+    if(private_){
+        m_tasks.remove(callbackID);
+        private_->deleteLater();
+        private_ = nullptr;
+    }
+}
+
+void NetworkTasks::clear()
+{
+    if(m_tasks.isEmpty()){
+        return;
+    }
+    QMapIterator<QString,NetworkPrivate*> it(m_tasks);
+    while(it.hasNext()){
+        it.next();
+        NetworkPrivate* private_ = it.value();
+        if(private_){
+            private_->deleteLater();
+            private_ = nullptr;
+        }
+    }
+    m_tasks.clear();
 }

@@ -34,7 +34,7 @@ QString getDownloadPath(DownloadManager::Storage storage) {
     return downloadPath;
 }
 
-QJsonObject successJson(QString callbackId, QString path, int status, qint64 received, qint64 total){
+QJsonObject successJson(const QString &callbackId, const QString &path, int status, qint64 received, qint64 total){
     QJsonObject json;
     json.insert("downloadID", callbackId);
     json.insert("path", path);
@@ -60,7 +60,7 @@ Download::~Download() {
 }
 
 
-void Download::invoke(QString callbackId, QString actionName, QVariantMap params)
+void Download::invoke(const QString &callbackId, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "callbackId" << callbackId << "actionName" << actionName << "params" << params << endl;
 
@@ -73,38 +73,22 @@ void Download::invoke(QString callbackId, QString actionName, QVariantMap params
     }
 }
 
-void Download::start(QString callbackId, QString url, QString name, QString storage){
+void Download::start(const QString &callbackId, const QString &url, const QString &name, const QString &storage){
 
     qDebug() << Q_FUNC_INFO << "params: " << callbackId << url << name << storage;
     globalCallbackID = callbackId.toLong();
 
     // 检查网络
-    if (!Validator::netWorkConnected()) {
-        signalManager()->failed(globalCallbackID, ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
-        globalCallbackID = 0;
-        return;
-    }
+//    if (!Validator::netWorkConnected()) {
+//        signalManager()->failed(globalCallbackID, ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
+//        globalCallbackID = 0;
+//        return;
+//    }
 
-    // if(isnetWork){
-    //     // 检查网络是否可用
-    //     QString network_cmd = "ping 114.114.114.114 -w 1";//向www.baidu.com请求两包数据，每包数据超时时间为1s
-    //     QString result;
-    //     processignalManager()->start(network_cmd);   //调用ping 指令
-    //     processignalManager()->waitForFinished();    //等待指令执行完毕
-    //     result = processignalManager()->readAll();   //获取指令执行结果
-    //     qDebug() << Q_FUNC_INFO << "result" << result << endl;
-    //     if(!result.contains(QString("ttl="))){   //若包含TTL=字符串则认为网络在线
-    //         qDebug() << Q_FUNC_INFO << "process:false"  << endl;
-    //         signalManager()->failed(globalCallbackID, ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络是否可用"));
-    //         return;
-    //     }
-    //     isnetWork = false;
-    // }
-
+    QString downloadName = name;
     if (name.isEmpty()) {
-        name = callbackId;
+        downloadName = callbackId;
     }
-    qDebug() << Q_FUNC_INFO << "url:" << url << "name:" << name << endl;
 
     //检查url
     if(!Validator::isHttpUrl(url)){
@@ -118,10 +102,10 @@ void Download::start(QString callbackId, QString url, QString name, QString stor
     //设置下载ID
     downloadManager->setDownloadId(callbackId);
     //设置存储位置
-    storage = storage.toLower();
-    if (storage==STORAGE_INTERNAL) {
+    QString storageLocation = storage.toLower();
+    if (storageLocation==STORAGE_INTERNAL) {
         downloadManager->setStorage(DownloadManager::Internal);
-    } else if(storage==STORAGE_EXTENDED) {
+    } else if(storageLocation==STORAGE_EXTENDED) {
         downloadManager->setStorage(DownloadManager::Extended);
     }
 
@@ -136,11 +120,13 @@ void Download::start(QString callbackId, QString url, QString name, QString stor
     taskInfo->downloadManager = downloadManager;
     tasks.insert(callbackId, taskInfo);
 
-    QString basePath = getDownloadPath(downloadManager->getStorage());
-    QString path = basePath + "/" + name;
+    //QString basePath = getDownloadPath(downloadManager->getStorage());
+    //文件下载到的位置
+    QString basePath = storage;
+    QString path = basePath + "/" + downloadName;
 
     // 判断当前文件是否重复，如果重复名称添加序号
-    QStringList nameSplit = name.split(".");
+    QStringList nameSplit = downloadName.split(".");
     int i = 1;
     while (QFile::exists(path)
            || QFile::exists(path + downloadManager->getDownloadFileSuffix())
@@ -171,7 +157,7 @@ void Download::start(QString callbackId, QString url, QString name, QString stor
     downloadManager->downloadFile(url, path);
 }
 
-void Download::cancel(QString callbackId, QString downloadID) {
+void Download::cancel(const QString &callbackId, const QString &downloadID) {
 
     qDebug() << Q_FUNC_INFO << "params: " << callbackId << downloadID;
     globalCallbackID = callbackId.toLong();
@@ -211,7 +197,7 @@ TaskInfo* Download::findTaskInfo(DownloadManager *downloadManager){
     return NULL;
 }
 
-void Download::removeTask(QString downloadId) {
+void Download::removeTask(const QString &downloadId) {
     qDebug() << Q_FUNC_INFO << "download removeTask " << endl;
     if (tasks.contains(downloadId)) {
         TaskInfo *taskInfo = tasks.value(downloadId);
@@ -232,14 +218,14 @@ void Download::removeTask(QString downloadId) {
 
 
 // 更新下载进度;
-void Download::onDownloadProcess(QString downloadId, QString path, qint64 bytesReceived, qint64 bytesTotal) {
+void Download::onDownloadProcess(const QString &downloadId, const QString &path, qint64 bytesReceived, qint64 bytesTotal) {
     QJsonObject json = successJson(downloadId, path, Downloading, bytesReceived, bytesTotal);
 //    qDebug() << Q_FUNC_INFO << "downloadProgress" << json << endl;
     signalManager()->success(downloadId.toLong(), json);
 }
 
 
-void Download::onReplyFinished(QString downloadId, QString path, int statusCode, QString errorMessage){
+void Download::onReplyFinished(const QString &downloadId, const QString &path, int statusCode, const QString &errorMessage){
     qDebug() << Q_FUNC_INFO << "download finished " << statusCode << errorMessage << endl;
 
     qint64 received = 0;
@@ -267,13 +253,13 @@ void Download::onReplyFinished(QString downloadId, QString path, int statusCode,
     removeTask(downloadId);
 }
 
-void Download::onDownloadError(QString downloadId, qint64 code, QString error){
+void Download::onDownloadError(const QString &downloadId, qint64 code, const QString &error){
     qDebug() << Q_FUNC_INFO << "download failed " << code << error << endl;
     signalManager()->failed(downloadId.toLong(), code, error);
     removeTask(downloadId);
 }
 
-void Download::onStarted(QString downloadId, QString path)
+void Download::onStarted(const QString &downloadId, const QString &path)
 {
     QJsonObject json = successJson(downloadId, path, Started, 0, 0);
     signalManager()->success(downloadId.toLong(), json);

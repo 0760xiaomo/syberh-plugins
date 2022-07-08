@@ -12,7 +12,7 @@ Telephony::Telephony()
 }
 
 
-void Telephony::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Telephony::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 

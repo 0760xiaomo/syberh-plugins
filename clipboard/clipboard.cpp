@@ -11,7 +11,7 @@ Clipboard::Clipboard()
 {
 }
 
-void Clipboard::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Clipboard::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -22,7 +22,7 @@ void Clipboard::invoke(QString callbackID, QString actionName, QVariantMap param
     }
 }
 
-void Clipboard::setClipboardData(QString callbackID, QVariantMap params){
+void Clipboard::setClipboardData(const QString &callbackID, const QVariantMap &params){
     QString data = params.value("data").toString();
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(data);
@@ -34,7 +34,7 @@ void Clipboard::setClipboardData(QString callbackID, QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(jsonObject));
 }
 
-void Clipboard::getClipboardData(QString callbackID, QVariantMap params){
+void Clipboard::getClipboardData(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(params)
 
     QClipboard *clipboard = QApplication::clipboard();

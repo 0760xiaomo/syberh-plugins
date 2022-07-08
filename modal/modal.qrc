@@ -9,7 +9,7 @@
         <file>res/success_primary_big.png</file>
         <file>qml/SToast.qml</file>
         <file>qml/SInputDialog.qml</file>
-        <file>js/util/tool.js</file>
+        <file>js/util/modalTool.js</file>
         <file>res/toast-success.png</file>
         <file>res/toast-fail.png</file>
     </qresource>

@@ -12,16 +12,16 @@ class HistoryData : public QObject
 public:
     HistoryData();
 
-    void insertMetadata(QString path,int size,int duration,QString created);
-    void removeMetadata(QString path);
-    void updateMetadata(QString path,int size,int duration);
+    void insertMetadata(const QString &path, int size, int duration, const QString &created);
+    void removeMetadata(const QString &path);
+    void updateMetadata(const QString &path, int size, int duration);
     QJsonArray selectMetadata();
 
 private :
     QSqlDatabase myConnection;
 
     bool createConnection();
-    bool checkOrCreateDir(QString path);
+    bool checkOrCreateDir(const QString &path);
     QString formatTime(int duration);
 };
 

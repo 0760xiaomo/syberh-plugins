@@ -37,31 +37,31 @@ public:
     Q_INVOKABLE Download();
     ~Download();
 
-    void invoke(QString callbackID, QString action, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &action, const QVariantMap &params);
 
 private:
     long globalCallbackID;
     
-    void start(QString callbackId, QString url, QString name, QString storage);
+    void start(const QString &callbackId, const QString &url, const QString &name, const QString &storage);
 
-    void cancel(QString callbackId, QString downloadID);
+    void cancel(const QString &callbackId, const QString &downloadID);
 
     TaskInfo* findTaskInfo(DownloadManager *downloadManager);
     //删除TaksInfo对象，断开连接的信号，并移除任务
-    void removeTask(QString downloadId);
+    void removeTask(const QString &downloadId);
 
     bool isnetWork;
 
 public slots:
 
     // 开始下载
-    void onStarted(QString downloadId, QString path);
+    void onStarted(const QString &downloadId, const QString &path);
 
-    void onDownloadProcess(QString downloadId, QString path, qint64 received, qint64 total);
+    void onDownloadProcess(const QString &downloadId, const QString &path, qint64 received, qint64 total);
 
-    void onReplyFinished(QString downloadId, QString path, int statusCode, QString errorMessage);
+    void onReplyFinished(const QString &downloadId, const QString &path, int statusCode, const QString &errorMessage);
 
-    void onDownloadError(QString downloadId, qint64 statusCode, QString error);
+    void onDownloadError(const QString &downloadId, qint64 statusCode, const QString &error);
 
 };
 

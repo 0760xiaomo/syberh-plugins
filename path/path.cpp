@@ -11,7 +11,7 @@ Path::Path()
 }
 
 
-void Path::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Path::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -26,7 +26,7 @@ void Path::invoke(QString callbackID, QString actionName, QVariantMap params)
     }
 }
 
-void Path::getExternStorageRootPath(QString callbackID)
+void Path::getExternStorageRootPath(const QString &callbackID)
 {
     Helper *helper = Helper::instance();
     QString ext = helper->getExternStorageRootPath();
@@ -35,7 +35,7 @@ void Path::getExternStorageRootPath(QString callbackID)
     signalManager()->success(callbackID.toLong(), jsObj);
 }
 
-void Path::getInnerStorageRootPath(QString callbackID)
+void Path::getInnerStorageRootPath(const QString &callbackID)
 {
     Helper *helper = Helper::instance();
     QString inner = helper->getInnerStorageRootPath();
@@ -44,7 +44,7 @@ void Path::getInnerStorageRootPath(QString callbackID)
     signalManager()->success(callbackID.toLong(), jsObj);
 }
 
-void Path::getDataRootPath(QString callbackID)
+void Path::getDataRootPath(const QString &callbackID)
 {
     Helper *helper = Helper::instance();
     QString dataRoot = helper->getDataRootPath();

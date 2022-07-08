@@ -51,7 +51,7 @@ QString DownloadManager::getDownloadFileSuffix() {
 }
 
 // 开始下载文件，传入下载链接和文件的路径
-void DownloadManager::downloadFile(QString url , QString fileName){
+void DownloadManager::downloadFile(const QString &url , const QString &fileName){
     // 防止多次点击开始下载按钮，进行多次下载，只有在停止标志变量为true时才进行下载;
     if (m_isStop) {
         m_isStop = false;
@@ -145,7 +145,7 @@ void DownloadManager::reset(){
 }
 
 // 删除文件
-void DownloadManager::removeFile(QString fileName){
+void DownloadManager::removeFile(const QString &fileName){
     // 删除已下载的临时文件;
     QFileInfo fileInfo(fileName);
     if (fileInfo.exists()) {
@@ -160,7 +160,7 @@ void DownloadManager::closeDownload(){
     removeFile(m_fileName);
 }
 
-void DownloadManager::setDownloadId(QString downloadId){
+void DownloadManager::setDownloadId(const QString &downloadId){
     m_downloadId = downloadId;
 }
 

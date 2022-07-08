@@ -16,7 +16,7 @@ class NETWORKINFOSHARED_EXPORT NetworkInfo: public ExtensionSystem::IPlugin
 public:
     Q_INVOKABLE NetworkInfo();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
 
@@ -27,7 +27,7 @@ private :
      * @return 成功则返回当前设备的网络信息。
      * @return 失败则返回错误码。
      */
-    void  info(QString callbackID, QVariantMap params);
+    void  info(const QString &callbackID, const QVariantMap &params);
 
 };
 

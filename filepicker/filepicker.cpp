@@ -19,7 +19,7 @@ void Filepicker::invokeInitialize()
 {
 }
 
-void Filepicker::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Filepicker::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -28,7 +28,7 @@ void Filepicker::invoke(QString callbackID, QString actionName, QVariantMap para
     }
 }
 
-void Filepicker::open(QString callbackID, QVariantMap params)
+void Filepicker::open(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "params" << params;
     globalCallbackID = callbackID.toLong();
@@ -50,7 +50,7 @@ void Filepicker::open(QString callbackID, QVariantMap params)
     qmlManager.connectSignal(filepickerQml, SIGNAL(cancel()), this, SLOT(chooseCancel()));
 }
 
-void Filepicker::chooseOk(QString filesPath)
+void Filepicker::chooseOk(const QString &filesPath)
 {
     // js传递json字符串过来
     qDebug() << Q_FUNC_INFO << "filesPath" << filesPath;

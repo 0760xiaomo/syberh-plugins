@@ -18,14 +18,14 @@ public:
     ~Qrcode();
 
     void invokeInitialize();
-    void invoke(QString callbackID, QString action, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &action, const QVariantMap &params);
 
 public slots:
-    void decodeFinished(QString decodeContent);
+    void decodeFinished(const QString &decodeContent);
     void cancel();
 
 private:
-    void scan(QString callbackID);
+    void scan(const QString &callbackID);
 
     QrcodePrivate *d;
 };

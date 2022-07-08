@@ -1,131 +1,219 @@
-#include "cgui_application.h"
-#include <cenvironment.h>
-#include <QDir>
+#include "update.h"
+#include "update_p.h"
+#include "framework/common/projectconfig.h"
+#include "framework/common/errorinfo.h"
+
 #include <QDebug>
 #include <QNetworkAccessManager>
+#include <QNetworkConfiguration>
+#include <QMetaEnum> 
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <csystempackagemanager.h>
-#include "update.h"
-#include "framework/common/projectconfig.h"
-#include "framework/common/errorinfo.h"
+#include "cgui_application.h"
+
+// 连接超时(毫秒)
+#define U_CONN_TIMEOUT 6000
+
+#define U_SUPPORT_HTTPS(url, request) \
+    if (url.startsWith("https", Qt::CaseInsensitive)) { \
+        QSslConfiguration config; \
+        config.setPeerVerifyMode(QSslSocket::VerifyNone); \
+        config.setProtocol(QSsl::UnknownProtocol); \
+        request.setSslConfiguration(config); \
+    }
+
 
 // 必须用这个命令空间下的qApp才可以
 using namespace SYBEROS;
 using namespace NativeSdk;
 
-class SyberH5HelpperPrivate
+
+bool appInfoUrl(QUrl *outUrl)
 {
-public:
-    SyberH5HelpperPrivate() {}
-    ~SyberH5HelpperPrivate(){
-        if(env){
-            env->deleteLater();
-        }
-        if(networkAccessManager){
-            networkAccessManager->deleteLater();
-        }
-        if(m_pSystemPackageManager){
-            m_pSystemPackageManager->deleteLater();
-        }
+    if(!outUrl){
+        return false;
     }
-    CEnvironment *env;
-    QNetworkAccessManager *networkAccessManager;
-    CSystemPackageManager *m_pSystemPackageManager;
-};
+    QString url = ProjectConfig::instance()->getAppStoreUrl();
+    if(url.isEmpty()){
+        return false;
+    }
+    QString path = ProjectConfig::instance()->getAppInfoPath();
+    if(path.isEmpty()){
+        return false;
+    }
+    QString sopid = ProjectConfig::instance()->getSopid();
+    if(sopid.isEmpty()){
+        return false;
+    }
+    outUrl->setUrl(url);
+    outUrl->setPath(QString("%1/%2").arg(path, sopid));
+    return true;
+}
 
-Update::Update():d(new SyberH5HelpperPrivate())
+QString openAppStoreUrl()
+{
+    return "store://mainpage?operation=" + ProjectConfig::instance()->getSopid();
+}
+
+void supportSsl(QNetworkRequest &request)
+{
+    QString scheme = request.url().scheme();
+    if(scheme.isEmpty()){
+        return;
+    }
+    if(QString::compare("https", scheme, Qt::CaseInsensitive) == 0){
+        QSslConfiguration config;
+        config.setPeerVerifyMode(QSslSocket::VerifyNone);
+        config.setProtocol(QSsl::UnknownProtocol);
+        request.setSslConfiguration(config);
+    }
+}
+
+// UpdatePrivate
+UpdatePrivate::UpdatePrivate(Update *update) : p(update), m_checking(false)
 {
 }
 
-Update::~Update() {
-    delete d;
-}
-
-
-void Update::invokeInitialize()
+UpdatePrivate::~UpdatePrivate()
 {
-    d->env = new CEnvironment(this);
-    d->networkAccessManager = new QNetworkAccessManager(this);
-    connect(d->networkAccessManager,SIGNAL(finished(QNetworkReply *)),this,SLOT(handleNetworkAccessReply(QNetworkReply*)));
-    d->m_pSystemPackageManager = new CSystemPackageManager(this);
-
-    NEW_VERSION_HEAD = ProjectConfig::instance()->getStoreBaseUrl();
-    // 获取sop包的详细信息接口（每个客户的域名不一样，api是一样的）
-    CHECK_NEWVERSION = "/api/v1/app";
-    MY_APP_ID = ProjectConfig::instance()->getSopid();
-    qDebug() << Q_FUNC_INFO  << "check" << NEW_VERSION_HEAD << CHECK_NEWVERSION << MY_APP_ID << endl;
+    QObject::disconnect(this);
+    p = nullptr;
 }
 
-void Update::invoke(QString callbackID, QString actionName, QVariantMap params)
+void UpdatePrivate::checkNewVersion(const QString &callbackID)
+{
+    if(m_checking){
+        qDebug() << Q_FUNC_INFO << "checking new version";
+        p->signalManager()->failed(callbackID.toLong(), ErrorInfo::InvalidCall, "正在检查版本");
+        return;
+    }
+    m_checking = true;
+    m_networkAccessManager.reset(new QNetworkAccessManager);
+    QNetworkConfiguration configure = m_networkAccessManager->activeConfiguration();
+    configure.setConnectTimeout(U_CONN_TIMEOUT);
+    m_networkAccessManager->setConfiguration(configure);
+
+    m_callbackID = callbackID.toLong();
+
+    QUrl url;
+    if(!appInfoUrl(&url)){
+        p->signalManager()->failed(m_callbackID, ErrorInfo::SystemError, "应用商店地址无效");
+        return;
+    }
+    qDebug() << Q_FUNC_INFO << "url:" << url;
+
+    QNetworkRequest request(url);
+    supportSsl(request);
+
+    QNetworkReply *reply = m_networkAccessManager->get(request);
+    if(reply){
+        m_reply.reset(reply);
+        connect(reply, &QNetworkReply::finished, this, &UpdatePrivate::onFinished);
+        connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
+    }
+}
+
+void UpdatePrivate::openAppStore()
+{
+    QString url = openAppStoreUrl();
+    qDebug() << Q_FUNC_INFO << "url:" << url;
+    qApp->openUrl(url);
+
+    p->signalManager()->success(m_callbackID, "");
+}
+
+void UpdatePrivate::clear()
+{
+    m_reply.reset();
+    m_networkAccessManager.reset();
+    m_checking = false;
+}
+
+
+void UpdatePrivate::onFinished()
+{
+    QByteArray byteData = m_reply->readAll();
+
+    qDebug() << Q_FUNC_INFO << byteData;
+
+    QJsonParseError err;
+    QJsonDocument document = QJsonDocument::fromJson(byteData.constData(), &err);
+
+    if(err.error != QJsonParseError::NoError){
+        p->signalManager()->failed(m_callbackID, ErrorInfo::SystemError, "获取响应数据失败: " + err.errorString());
+        clear();
+        return;
+    }
+    if(!document.isObject()){
+        p->signalManager()->failed(m_callbackID, ErrorInfo::UnknowError, "接口响应数据格式无效");
+        clear();
+        return;
+    }
+    QJsonObject object = document.object();
+
+    if(!object.contains("vercode")){
+        p->signalManager()->failed(m_callbackID, ErrorInfo::UnknowError, "接口响应数据缺失版本信息");
+        clear();
+        return;
+    }
+
+    CSystemPackageManager pkgManger;
+    QSharedPointer<CPackageInfo> info = pkgManger.packageInfo(ProjectConfig::instance()->getSopid());
+    if(info.isNull()) {
+        p->signalManager()->failed(m_callbackID, ErrorInfo::SystemError, "无法获取当前应用信息");
+        clear();
+        return;
+    }
+    int vercode =  object["vercode"].toInt();
+    int oldCode = info->versionCode();
+
+    QJsonObject result;
+    result.insert("oldCode", oldCode);
+    result.insert("vercode", vercode);
+
+    if(vercode > oldCode) {
+        result.insert("isNeedUpdate", true);
+    } else {
+        result.insert("isNeedUpdate", false);
+    }
+    qDebug() << Q_FUNC_INFO << "result:" << result;
+    p->signalManager()->success(m_callbackID, QVariant(result));
+    clear();
+}
+
+void UpdatePrivate::onError(QNetworkReply::NetworkError err)
+{
+    QMetaEnum metaEnum = QMetaEnum::fromType<QNetworkReply::NetworkError>();
+    QString networkErrMsg = m_reply->errorString();
+    QString msg = QString("%1 %2::%3")
+        .arg(networkErrMsg.isEmpty()?"":networkErrMsg, metaEnum.name(), metaEnum.valueToKey(static_cast<int>(err)));
+
+    qDebug() << Q_FUNC_INFO << msg;
+
+    p->signalManager()->failed(m_callbackID, ErrorInfo::SystemError, msg);
+    clear();
+}
+
+
+
+// Update
+Update::Update()
+{
+    d.reset(new UpdatePrivate(this));
+}
+
+Update::~Update()
+{
+}
+
+void Update::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
     if (actionName == "check") {
-        check(callbackID, params);
+        d->checkNewVersion(callbackID);
     } else if (actionName == "toStore") {
-        // 跳转到企业商店对应的app处
-        qApp->openUrl("store://mainpage?operation=" + MY_APP_ID);
-        signalManager()->success(callbackID.toLong(), "");
+        d->openAppStore();
     }
-}
-
-void Update::check(QString callbackID,QVariantMap params) // 开始检测是否有新版本可用
-{
-    qDebug() << Q_FUNC_INFO << params;
-    checkCallBackID = callbackID.toLong();
-    QString url = QString("%1%2/%3").arg(NEW_VERSION_HEAD).arg(CHECK_NEWVERSION).arg(MY_APP_ID);
-    qDebug() << Q_FUNC_INFO << url;
-    QNetworkRequest networkRequest;
-    networkRequest.setUrl(QUrl(url));
-    qDebug()<<"url:"<<url;
-    d->networkAccessManager->get(networkRequest);
-}
-
-void Update::handleNetworkAccessReply(QNetworkReply *reply)
-{
-    qDebug()<<Q_FUNC_INFO<<endl;
-    QByteArray byteData = reply->readAll();
-
-    qDebug() << Q_FUNC_INFO << byteData;
-    QJsonParseError error;
-    QJsonDocument document = QJsonDocument::fromJson(byteData.constData(), &error);
-    if(error.error == QJsonParseError::NoError) {
-        if(document.isObject()) {
-            QJsonObject object = document.object();
-            int vercode =  object["vercode"].toInt();
-            qDebug() << "web vercode = " << vercode;
-            QString m_sUpdateNote = object["desc"].toString();
-            qDebug() << "web UpdateNote = " << m_sUpdateNote;
-
-            QSharedPointer<CPackageInfo> info = d->m_pSystemPackageManager->packageInfo(MY_APP_ID);
-
-            if(info.isNull()) {
-                qWarning() << "get packageinfo by sopid error";
-                signalManager()->failed(checkCallBackID, ErrorInfo::SystemError, "无法获取当前应用的详细信息");
-                return;
-            }
-
-            int oldCode = info->versionCode();
-            qDebug() << "oldCode = " << oldCode;
-
-            // jieguo
-            QJsonObject resultObj;
-            resultObj.insert("oldCode", oldCode);
-            resultObj.insert("vercode", vercode);
-
-            if(vercode > oldCode) {
-                resultObj.insert("isNeedUpdate", true);
-            } else {
-                resultObj.insert("isNeedUpdate", false);
-            }
-
-            qDebug() << Q_FUNC_INFO << "resultObj:" << resultObj << endl;
-            signalManager()->success(checkCallBackID, QVariant(resultObj));
-        }
-    } else {
-        signalManager()->failed(checkCallBackID, ErrorInfo::SystemError, "系统出错，未返回应用的详细信息，请检查url是否正确");
-    }
-
-    reply->deleteLater();
 }

@@ -15,13 +15,13 @@ class PATHSHARED_EXPORT Path: public ExtensionSystem::IPlugin
 public:
     Path();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
 
-    void getExternStorageRootPath(QString callbackID);
-    void getInnerStorageRootPath(QString callbackID);
-    void getDataRootPath(QString callbackID);
+    void getExternStorageRootPath(const QString &callbackID);
+    void getInnerStorageRootPath(const QString &callbackID);
+    void getDataRootPath(const QString &callbackID);
 };
 
 #endif // PATH_H

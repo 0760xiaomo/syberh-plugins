@@ -15,10 +15,10 @@ void Camera::extensionsInitialized()
 {
     qDebug() << Q_FUNC_INFO;
     // error signal
-    connect(&qmlManager, SIGNAL(error(QString)), this, SLOT(error(QString)));
+    connect(&qmlManager, &QmlManager::error, this, &Camera::error);
 }
 
-void Camera::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Camera::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -29,16 +29,17 @@ void Camera::invoke(QString callbackID, QString actionName, QVariantMap params)
     }
 }
 
-void Camera::takePhoto(QString callbackID, QVariantMap params)
+void Camera::takePhoto(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "params" << params;
     globalCallbackID = callbackID.toLong();
 
     QString enableCut = params.value("enableCut").toString();
 
-    qDebug() << Q_FUNC_INFO << "currentItem***************" << qmlManager.currentItem();
+    QQuickItem* currentItem = qmlManager.currentItem();
+    qDebug() << Q_FUNC_INFO << "currentItem***************" << currentItem;
 
-    QVariant page = qmlManager.call(qmlManager.currentItem(), "var webviewPage = pageStack.currentPage;console.log(webviewPage);var cameraComponent = pageStack.push('qrc:/qml/SCamera.qml', {'pageItem': webviewPage, 'enableCut':"+ enableCut +"});cameraComponent");
+    QVariant page = qmlManager.call(currentItem, "var webviewPage = pageStack.currentPage;console.log(webviewPage);var cameraComponent = pageStack.push('qrc:/qml/SCamera.qml', {'pageItem': webviewPage, 'enableCut':"+ enableCut +"});cameraComponent");
 
     qDebug() << Q_FUNC_INFO << "page" << page;
 
@@ -48,7 +49,7 @@ void Camera::takePhoto(QString callbackID, QVariantMap params)
     connect(cameraQml, SIGNAL(imageCancele()), this, SLOT(imageCancele()));
 }
 
-void Camera::imageConfirmed(QString filePath)
+void Camera::imageConfirmed(const QString &filePath)
 {
     qDebug() << Q_FUNC_INFO << "filePath" << filePath<< "****************************";
 
@@ -62,7 +63,7 @@ void Camera::imageConfirmed(QString filePath)
     qmlManager.call(cameraQml, "cameraBack()");
 }
 
-void Camera::error(QString errorMsg)
+void Camera::error(const QString &errorMsg)
 {
     qDebug() << Q_FUNC_INFO << "errorMsg::" << errorMsg;
     globalCallbackID = 0;
@@ -78,7 +79,7 @@ void Camera::imageCancele()
 }
 
 
-void Camera::changeCameraImagePath(QString callbackID, QVariantMap params){
+void Camera::changeCameraImagePath(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "changeCameraImagePath" << params << endl;
     globalCallbackID = callbackID.toLong();
 

@@ -3,12 +3,12 @@
 
 #include <QObject>
 #include <QtPlugin>
-#include <QNetworkReply>
+#include <QScopedPointer>
 
 #include "iplugin/iplugin.h"
 #include "update_global.h"
 
-class SyberH5HelpperPrivate;
+class UpdatePrivate;
 
 class UPDATESHARED_EXPORT Update : public ExtensionSystem::IPlugin
 {
@@ -17,31 +17,12 @@ class UPDATESHARED_EXPORT Update : public ExtensionSystem::IPlugin
 
 public:
     Update();
-    ~Update();
+    virtual ~Update();
 
-    void invokeInitialize();
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
-
-    /**
-     * @brief check jiancha shi fou geng xin
-     * @param callBackID 任务Id
-     * @param params 参数
-     * @return 成功则无返回。
-     *      失败则返回错误码。
-     */
-    void check(QString callbackID,QVariantMap params);
-
-    SyberH5HelpperPrivate *d;
-    QString MY_APP_ID;
-    QString NEW_VERSION_HEAD;
-    QString CHECK_NEWVERSION;
-    long checkCallBackID;
-
-private slots:
-    void handleNetworkAccessReply(QNetworkReply *reply);
-
+    QScopedPointer<UpdatePrivate> d;
 };
 
 #endif // UPDATE_H

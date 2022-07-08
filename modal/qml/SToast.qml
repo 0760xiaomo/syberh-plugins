@@ -17,15 +17,12 @@ reserved.
 import QtQuick 2.3
 import QtQuick.Window 2.2
 import com.syberos.basewidgets 2.0
-import "../js/util/tool.js" as Tool
+import "../js/util/modalTool.js" as Tool
 
 
 Rectangle {
-    id: stoast;
+    id: stoast
     z: 1000
-
-    /*! 模态框和页面的缩放比例 */
-    property real scaleFactor: env.dp(1)
 
     /*! 提示的内容 */
     //property string title: ""
@@ -42,7 +39,7 @@ Rectangle {
     signal accepted()
 
     width: env.dp(330)
-    height: scaleFactor * 330
+    height: env.dp(330)
     x: parent.width/ 2 - width / 2
     y: parent.height  / 2 - height / 2 - gScreenInfo.statusBarHeight
 
@@ -51,20 +48,20 @@ Rectangle {
     opacity: 0
 
     Column {
-        spacing: scaleFactor * 20;
+        spacing: env.dp(20)
         anchors.centerIn: parent
         Image {
             id: toastIcon
             anchors.horizontalCenter: parent.horizontalCenter
-            width: scaleFactor * 141
-            height: scaleFactor * 141
+            width: env.dp(141)
+            height: env.dp(141)
             source: ""
         }
 
         Text {
             id: toastText
             anchors.horizontalCenter: parent.horizontalCenter
-            font.pixelSize: scaleFactor * 40
+            font.pixelSize: env.dp(40)
             text: ""
             color: "white"
         }
@@ -84,6 +81,9 @@ Rectangle {
         from: 0.8
         to: 0
         running:false
+        onStopped: {
+            stoast.destroy()
+        }
     }
 
     Timer{
@@ -93,10 +93,8 @@ Rectangle {
         triggeredOnStart: false
 
         onTriggered: {
-            closeTimer.stop();
             if(!hideAnimation.running){
                 hideAnimation.start();
-
             }
         }
     }
@@ -106,14 +104,12 @@ Rectangle {
     /*! 显示弹层。 */
     function show(title, icon, duration) {
 
-        hide();
-
         if(!title){
             return "提示的内容不能为空";
         }
 
-        if(!icon || (icon !== "success" && icon !== "error")){
-            icon = "success";
+        if(icon !== "success" && icon !== "error" && icon !== "none"){
+            icon = "none";
         }
 
         var strlength = Tool.getStrLength(title);
@@ -134,8 +130,6 @@ Rectangle {
 
         accepted();
 
-        stoast.width = stoast.scaleFactor * 330
-        stoast.height = stoast.scaleFactor * 330
         toastIcon.visible = true;
 
         if(icon === "success"){
@@ -147,27 +141,14 @@ Rectangle {
         }else if(icon === "none"){
             toastIcon.visible = false;
             toastText.text = Tool.getOutputStr(title, stoast.textLength);
-            stoast.width = stoast.scaleFactor * toastText.contentWidth + 80
-            stoast.height = stoast.scaleFactor * toastText.contentHeight + 80
+            stoast.width = env.dp(toastText.contentWidth) + 80
+            stoast.height = env.dp(toastText.contentHeight) + 80
         }
 
         if(!showAnimation.running){
             showAnimation.start();
         }
         closeTimer.start();
-    }
-
-    /*! 隐藏弹层。 */
-    function hide() {
-        stoast.opacity = 0;
-        if(showAnimation.running){
-            showAnimation.stop();
-        }
-        if(hideAnimation.running){
-            hideAnimation.stop();
-        }
-
-        closeTimer.stop();
     }
 
 }

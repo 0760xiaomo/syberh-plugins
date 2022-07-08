@@ -1,32 +1,77 @@
 #include "upload.h"
+#include "upload_p.h"
 #include "framework/common/errorinfo.h"
 #include "util/validator.h"
+#include "util/util.h"
+
+#include <QFile>
 #include <QJsonObject>
 #include <QDebug>
+
+
+#define UL_STATUS_START         1
+#define UL_STATUS_UPLOADING     2
+#define UL_STATUS_FINISH        3
+
+#define UL_CHECK_PARAM(params, name, callbackID, msg) \
+    if(!NativeSdk::Util::CheckParam(params, name)) { \
+        signalManager()->failed(callbackID.toLong(), NativeSdk::ErrorInfo::InvalidParameter, msg); \
+        return; \
+    }
+
+#define UL_RESULT(var, callbackId, status, sent, total) \
+    QJsonObject var; \
+    var.insert("id", callbackId); \
+    var.insert("status", status); \
+    var.insert("sent", sent); \
+    var.insert("total", total);
+
 
 using namespace NativeSdk;
 
 //key 既是downloadID也是callbackID
-static QMap<QString, TaskInfo*> tasks;
+static QMap<QString, UploadPrivate*> tasks;
+
+void removeTask(const QString &id)
+{
+    if(id.isEmpty()){
+        return;
+    }
+    UploadPrivate* task = tasks.value(id);
+    if(!task){
+        return;
+    }
+    tasks.remove(id);
+    QObject::disconnect(task, nullptr, nullptr, nullptr);
+    task->deleteLater();
+}
+
+
 
 Upload::Upload()
 {
-    m_error = false;
 }
 
-QJsonObject successJson(QString callbackId, int status, qint64 received, qint64 total){
-    QJsonObject json;
-    json.insert("uploadID", callbackId);
-    json.insert("status", status);
-    json.insert("received", received);
-    json.insert("total", total);
-    return json;
-}
-
-void Upload::invoke(QString callbackID, QString actionName, QVariantMap params)
+Upload::~Upload()
 {
-    qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
+    if(tasks.isEmpty()){
+        return;
+    }
+    QMap<QString, UploadPrivate*>::const_iterator i = tasks.constBegin();
+    while (i != tasks.constEnd()) {
+        UploadPrivate* private_ = i.value();
+        if(private_){
+            QObject::disconnect(private_, nullptr, nullptr, nullptr);
+            private_->deleteLater();
+        }
+        ++i;
+    }
+    tasks.clear();
+}
 
+
+void Upload::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
+{
     if (actionName == "start") {
         start(callbackID, params);
     } else if (actionName == "cancel") {
@@ -34,150 +79,113 @@ void Upload::invoke(QString callbackID, QString actionName, QVariantMap params)
     }
 }
 
-void Upload::start(QString callbackID, QVariantMap params)
+void Upload::start(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "params" << params;
-    globalCallbackID = callbackID.toLong();
 
-    QString reqUrl = params.value("url").toString();
-    QString filePath = params.value("filePath").toString();
+    UL_CHECK_PARAM(params, "url", callbackID, "URL为空")
+    UL_CHECK_PARAM(params, "file", callbackID, "文件路径为空")
+
+    QString url = params.value("url").toString();
     QString name = params.value("name").toString();
+    QString filePath = params.value("file").toString();
+    QVariant cookieVar = params.value("cookie");
+    QVariant headerVar = params.value("header");
+    QVariant formVar = params.value("form");
 
-    if (name == "") {
-        qDebug() << "name parameter is not empty" << reqUrl << endl;
-        signalManager()->failed(globalCallbackID, ErrorInfo::InvalidParameter, ErrorInfo::message(ErrorInfo::InvalidParameter, "name不能为空"));
-        globalCallbackID = 0;
-        return;
+    if(filePath.startsWith("file://", Qt::CaseInsensitive)){
+        filePath = filePath.mid(7);
     }
-
-    QFile file(filePath);
-    if (!file.exists()) {
+    if(!QFile::exists(filePath)) {
         qDebug() << Q_FUNC_INFO << "文件地址不存在：" << filePath << endl;
-        signalManager()->failed(globalCallbackID, ErrorInfo::FileNotExists, "文件不存在");
-        globalCallbackID = 0;
+        signalManager()->failed(callbackID.toLong(), ErrorInfo::InvalidParameter, "文件不存在");
+        return;
+    }
+    // name为空时使用默认值file
+    if(name.isEmpty()){
+        name = "file";
+    }
+
+    UploadPrivate *private_ = new UploadPrivate(callbackID);
+    private_->setUrl(url);
+    private_->setFile(name, filePath);
+
+    if(cookieVar.canConvert<QVariantMap>()){
+        private_->setCookies(cookieVar.toMap());
+    }else if(cookieVar.canConvert<QString>()){
+        private_->setCookies(cookieVar.toString());
+    }
+    if(headerVar.isValid() && headerVar.canConvert<QVariantMap>()){
+        private_->setHeaders(headerVar.toMap());
+    }
+    if(formVar.isValid() && formVar.canConvert<QVariantMap>()){
+        private_->setForm(formVar.toMap());
+    }
+
+    connect(private_, &UploadPrivate::started, this, &Upload::onStarted);
+    connect(private_, &UploadPrivate::uploadProcess, this, &Upload::onUploadProgress);
+    connect(private_, &UploadPrivate::finished, this, &Upload::onFinished);
+    connect(private_, &UploadPrivate::error, this, &Upload::onError);
+
+    private_->upload();
+    if(private_->hasError()){
+        onError(callbackID, private_->getError());
+        disconnect(private_, nullptr, nullptr, nullptr);
+        private_->deleteLater();
         return;
     }
 
-    // 检查网络
-    if (!Validator::netWorkConnected()) {
-        signalManager()->failed(globalCallbackID, ErrorInfo::NetworkError, ErrorInfo::message(ErrorInfo::NetworkError, "请检查网络状态"));
-        globalCallbackID = 0;
-        return;
-    }
-
-    //检查url
-    if(!Validator::isHttpUrl(reqUrl)){
-        qDebug() << "url parameter is not starts with http or https: " << reqUrl << endl;
-        signalManager()->failed(globalCallbackID, ErrorInfo::InvalidParameter, ErrorInfo::message(ErrorInfo::InvalidParameter, "URL无效"));
-        globalCallbackID = 0;
-        return;
-    }
-
-    UploadManager *uploadManager = new UploadManager();
-
-    connect(uploadManager, SIGNAL(signalUploadProcess(QString, qint64, qint64)), this, SLOT(onUploadProgress(QString, qint64, qint64)));
-    connect(uploadManager, SIGNAL(signalReplyFinished(QString)), this, SLOT(onFinished(QString)));
-    connect(uploadManager, SIGNAL(signalError(QString, qint64, QString)), this, SLOT(onError(QString, qint64, QString)));
-    connect(uploadManager, SIGNAL(signalStarted(QString)), this, SLOT(onStarted(QString)));
-    uploadManager->setUploadId(callbackID);
-    uploadManager->uploadFile(params);
-
-
-    // 当前任务记录到tasks
-    TaskInfo *taskInfo = new TaskInfo();
-    taskInfo->uploadID = callbackID;
-    taskInfo->uploadManager = uploadManager;
-    tasks.insert(callbackID, taskInfo);
+    tasks.insert(callbackID, private_);
 }
 
 
-void Upload::cancel(QString callbackID, QVariantMap params)
+void Upload::cancel(const QString &callbackID, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "params" << params;
-    globalCallbackID = callbackID.toLong();
 
-    QString taskId = params.value("taskId").toString();
-    TaskInfo *taskInfo = tasks.value(taskId);
-    if (taskInfo != NULL) {
-        taskInfo->uploadManager->stopWork();
-        deleteTask(taskId);
+    UL_CHECK_PARAM(params, "id", callbackID, "id为空")
+
+    QString id = params.value("id").toString();
+
+    UploadPrivate *private_ = tasks.value(id);
+    if (private_) {
+        private_->abort();
+        removeTask(id);
 
         QJsonObject json;
         json.insert("result", true);
-        signalManager()->success(globalCallbackID, json);
+        signalManager()->success(callbackID.toLong(), json);
     } else {
-        signalManager()->failed(globalCallbackID, ErrorInfo::CannelFailed, ErrorInfo::message(ErrorInfo::CannelFailed, "任务不存在或已完成"));
+        signalManager()->failed(callbackID.toLong(), ErrorInfo::InvalidCall, "任务不存在或已完成");
     }
 }
 
-void Upload::deleteTask(QString taskId)
+void Upload::onStarted(const QString &callbackID)
 {
-    qDebug() << Q_FUNC_INFO << "taskId" << taskId;
-    TaskInfo *taskInfo = tasks.value(taskId);
-    if (taskInfo!=NULL) {
-
-        delete taskInfo->uploadManager;
-        taskInfo->uploadManager = NULL;
-
-        delete taskInfo;
-        taskInfo = NULL;
-        tasks.remove(taskId);
-
-    }
+    UL_RESULT(result, callbackID, UL_STATUS_START, 0, 0);
+    signalManager()->success(callbackID.toLong(), result);
 }
 
-void Upload::onUploadProgress(QString callbackID, qint64 bytesReceived, qint64 bytesTotal)
+void Upload::onUploadProgress(const QString &callbackID, qint64 bytesSent, qint64 bytesTotal)
 {
-    qDebug() << Q_FUNC_INFO << "！！！！！-----------上传文件，onUploadProgress." << endl;
-
-    // 由于发送error信号后，程序还会执行此信号 所以做一下判断拦截
-    if (m_error) {
-        return;
-    }
-
-    // 上传完成后，上传大小和总大小程序重置为0了，所以如果总大小为0，就判断拦截
-    if (bytesTotal == 0) {
-        return;
-    }
-
-    QJsonObject json = successJson(callbackID, Downloading, bytesReceived, bytesTotal);
-
-    m_bytesTotal = bytesTotal;
-
-//    qDebug() << Q_FUNC_INFO << "！！！！！-----------上传文件，已上传：" + QString::number(bytesReceived) + "总大小：" + QString::number(bytesTotal) << endl;
-
-    signalManager()->success(globalCallbackID, json);
+    UL_RESULT(result, callbackID, UL_STATUS_UPLOADING, bytesSent, bytesTotal);
+    signalManager()->success(callbackID.toLong(), result);
 }
-void Upload::onFinished(QString callbackID)
+
+void Upload::onFinished(const QString &callbackID, const UploadResponse &response)
 {
+    removeTask(callbackID);
 
-    qDebug() << Q_FUNC_INFO << "！！！！！-----------上传文件，onFinished." << endl;
+    UL_RESULT(result, callbackID, UL_STATUS_FINISH, response.bytesSent, response.bytesTotal);
+    result.insert("response", response.toJson());
 
-    // 由于发送error信号后，程序还会执行此信号 所以做一下判断拦截
-    if (m_error) {
-        return;
-    }
-    // 任务完成，删除任务
-    deleteTask(callbackID);
-
-//    qDebug() << Q_FUNC_INFO << "！！！！！-----------上传文件，完成." << endl;
-
-    QJsonObject json = successJson(callbackID, Completed, m_bytesTotal, m_bytesTotal);
-    signalManager()->success(globalCallbackID, json);
+    signalManager()->success(callbackID.toLong(), result);
 }
 
-void Upload::onError(QString callbackID, qint64 statusCode, QString error)
+void Upload::onError(const QString &callbackID, const QString &error)
 {
     // 任务异常，删除任务
-    deleteTask(callbackID);
-    m_error = true;
-    signalManager()->failed(globalCallbackID, statusCode, error);
+    removeTask(callbackID);
+    signalManager()->failed(callbackID.toLong(), ErrorInfo::SystemError, error);
 }
-
-void Upload::onStarted(QString callbackID)
-{
-    QJsonObject json = successJson(callbackID, Started, 0, 0);
-    signalManager()->success(globalCallbackID, json);
-}
-
 

@@ -11,10 +11,14 @@ TEMPLATE = lib
 
 DEFINES += NETWORK_LIBRARY
 
-SOURCES += network.cpp 
+SOURCES += network.cpp \
+        network_p.cpp \
+        networkcookiejar.cpp
 
-HEADERS += network.h\
-        network_global.h
+HEADERS += network.h \
+        network_global.h \
+        network_p.h \
+        networkcookiejar.h
 
 CONFIG += link_pkgconfig
 CONFIG += C++11

@@ -12,11 +12,13 @@ TEMPLATE = lib
 DEFINES += UPLOAD_LIBRARY
 
 SOURCES += upload.cpp \
-    util/uploadmanager.cpp
+        upload_p.cpp \
+        uploadcookiejar.cpp
 
-HEADERS += upload.h\
-        upload_global.h \
-    util/uploadmanager.h
+HEADERS += upload_global.h \
+        upload.h \
+        upload_p.h \
+        uploadcookiejar.h
 
 CONFIG += link_pkgconfig
 CONFIG += C++11

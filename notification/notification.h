@@ -15,7 +15,7 @@ class NOTIFICATIONSHARED_EXPORT Notification: public ExtensionSystem::IPlugin
 public:
     Notification();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
     /**
@@ -24,7 +24,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void badgeShow(QString callbackID, QVariantMap params);
+    void badgeShow(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief sendNotification 消息发送
@@ -32,7 +32,7 @@ private :
      * @return 成功则消息id。
      *      失败则返回错误码。
      */
-    void sendNotification(QString callbackID, QVariantMap params);
+    void sendNotification(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief removeAllNotifications 删除消息
@@ -40,7 +40,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void removeAllNotifications(QString callbackID, QVariantMap params);
+    void removeAllNotifications(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief removeNotification 删除指定消息
@@ -48,7 +48,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void removeNotification(QString callbackID, QVariantMap params);
+    void removeNotification(const QString &callbackID, const QVariantMap &params);
 
 };
 

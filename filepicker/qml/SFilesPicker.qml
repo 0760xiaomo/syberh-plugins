@@ -69,6 +69,7 @@ CPage {
     onStatusChanged: {
         // 状态从1到2， 才接收到了参数, 打印日志发现的
         if (status === 2) {
+            filesPicker.isDirMode = false;
             if (categoryType === "all") {
                 category = 0
             } else if (categoryType === "image") {
@@ -81,7 +82,11 @@ CPage {
                 category = 4
             } else if (categoryType === "text") {
                 category = 5
-            } else {
+            } else if(categoryType === "dir"){
+                // 添加选择文件夹
+                filesPicker.isDirMode = true;
+                category = 0
+            } else{
                 category = 0
             }
 

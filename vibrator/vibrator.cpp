@@ -7,6 +7,7 @@
 
 using namespace NativeSdk;
 
+bool Vibrator::vibratorState = false;
 
 Vibrator::Vibrator()
 {
@@ -39,7 +40,7 @@ void Vibrator::invokeInitialize()
     profile = new CSystemProfileManager();
 }
 
-void Vibrator::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Vibrator::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -55,7 +56,7 @@ void Vibrator::invoke(QString callbackID, QString actionName, QVariantMap params
 }
 
 
-void Vibrator::vibrate(QString callbackID, QVariantMap params){
+void Vibrator::vibrate(const QString &callbackID, const QVariantMap &params){
 
     qDebug() << Q_FUNC_INFO << "params: " << params << endl;
     globalCallbackID = callbackID.toLong();
@@ -84,6 +85,9 @@ void Vibrator::vibrate(QString callbackID, QVariantMap params){
     if(!vibratingEnabled){
         profile->setVibratingEnabled(true);
     }
+
+    //保存记录的震动状态
+    vibratorState = vibratingEnabled;
 
     //连接震动服务
     bool isConnected = client->isConnected();
@@ -120,7 +124,7 @@ void Vibrator::vibrate(QString callbackID, QVariantMap params){
 }
 
 
-void Vibrator::vibrateInfo(QString callbackID,QVariantMap params){
+void Vibrator::vibrateInfo(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO  << "callbackID is" << callbackID << "params is" << params << endl;
     globalCallbackID = callbackID.toLong();
 
@@ -138,7 +142,7 @@ void Vibrator::vibrateInfo(QString callbackID,QVariantMap params){
     globalCallbackID = 0;
 }
 
-void Vibrator::setTouchVibrationSoundEnabled(QString callbackID, QVariantMap params){
+void Vibrator::setTouchVibrationSoundEnabled(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO  << "callbackID is" << callbackID << "params is" << params << endl;
     globalCallbackID = callbackID.toLong();
 
@@ -163,7 +167,7 @@ void Vibrator::setTouchVibrationSoundEnabled(QString callbackID, QVariantMap par
 }
 
 
-void Vibrator::setVibratingEnabled(QString callbackID,QVariantMap params){
+void Vibrator::setVibratingEnabled(const QString &callbackID, const QVariantMap &params){
     qDebug() << "setVibratingEnabled callbackID is" << callbackID << "params is" << params << endl;
     globalCallbackID = callbackID.toLong();
 
@@ -195,7 +199,7 @@ void Vibrator::eventCompleted(quint32 eventId){
 
     bool vibratingEnabled = profile->vibratingEnabled();
     if(vibratingEnabled){
-        profile->setVibratingEnabled(false);
+        profile->setVibratingEnabled(vibratorState);
     }
 }
 void Vibrator::eventPlaying(quint32 eventId){

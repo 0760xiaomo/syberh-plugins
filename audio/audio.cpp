@@ -19,7 +19,7 @@ void Audio::invokeInitialize()
     player = new QMediaPlayer();
 }
 
-void Audio::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Audio::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -34,7 +34,7 @@ void Audio::invoke(QString callbackID, QString actionName, QVariantMap params)
     }
 }
 
-void Audio::start(QString callbackID,QVariantMap params){
+void Audio::start(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "start" << params << endl;
 
     QString filePath = params.value("path").toString();
@@ -81,14 +81,14 @@ void Audio::start(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Audio::pause(QString callbackID,QVariantMap params){
+void Audio::pause(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "pause" << params << endl;
 
     player->pause();
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Audio::resume(QString callbackID,QVariantMap params){
+void Audio::resume(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "resume" << params << endl;
 
     int position = params.value("position").toInt();
@@ -112,7 +112,7 @@ void Audio::resume(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Audio::stop(QString callbackID,QVariantMap params){
+void Audio::stop(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "stop" << params << endl;
 
     player->stop();

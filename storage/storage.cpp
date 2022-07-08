@@ -18,7 +18,7 @@ Storage::~Storage(){
 }
 
 
-void Storage::invoke(QString callbackId, QString actionName, QVariantMap params) {
+void Storage::invoke(const QString &callbackId, const QString &actionName, const QVariantMap &params) {
     qDebug() << "callbackId:" << callbackId << "actionName:" << actionName << "params:" << params << endl;
 
     if (manager == nullptr){
@@ -44,7 +44,7 @@ void Storage::invoke(QString callbackId, QString actionName, QVariantMap params)
 }
 
 
-void Storage::setItem(QString callbackId, QString key, QVariant value){
+void Storage::setItem(const QString &callbackId, const QString &key, const QVariant &value){
     if(!checkKey(callbackId, key, true)){
         return;
     }
@@ -62,7 +62,7 @@ void Storage::setItem(QString callbackId, QString key, QVariant value){
 }
 
 
-void Storage::getItem(QString callbackId, QString key){
+void Storage::getItem(const QString &callbackId, const QString &key){
     if(!checkKey(callbackId, key, true)){
         return;
     }
@@ -75,7 +75,7 @@ void Storage::getItem(QString callbackId, QString key){
     emit signalManager()->success(callbackId.toLong(), json);
 }
 
-void Storage::removeItem(QString callbackId, QString key){
+void Storage::removeItem(const QString &callbackId, const QString &key){
     if(!checkKey(callbackId, key, true)){
         return;
     }
@@ -94,7 +94,7 @@ void Storage::removeItem(QString callbackId, QString key){
     emit signalManager()->success(callbackId.toLong(), json);
 }
 
-void Storage::removeAll(QString callbackId){
+void Storage::removeAll(const QString &callbackId){
     manager->removeAllOwnedKeys();
     CStorageBasic::CryptoStorageStatus status = manager->status();
     qDebug() << Q_FUNC_INFO << "removeAll status:" << status;
@@ -103,7 +103,7 @@ void Storage::removeAll(QString callbackId){
     emit signalManager()->success(callbackId.toLong(), json);
 }
 
-void Storage::getAllKeys(QString callbackId){
+void Storage::getAllKeys(const QString &callbackId){
     QStringList keys = manager->listAll();
     CStorageBasic::CryptoStorageStatus status = manager->status();
     qDebug() << Q_FUNC_INFO << "getAllKeys status:" << status;
@@ -113,7 +113,7 @@ void Storage::getAllKeys(QString callbackId){
     emit signalManager()->success(callbackId.toLong(), json);
 }
 
-bool Storage::checkKey(QString callbackId, QString key, bool sendFailSign){
+bool Storage::checkKey(const QString &callbackId, const QString &key, bool sendFailSign){
     if(key.isEmpty()){
         if(sendFailSign){
             emit signalManager()->failed(callbackId.toLong(), ErrorInfo::InvalidParameter, ErrorInfo::message(ErrorInfo::InvalidParameter, "键名不能为空"));

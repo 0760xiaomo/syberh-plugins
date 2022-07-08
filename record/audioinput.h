@@ -6,7 +6,7 @@ class AudioInput : public QObject
 {
     Q_OBJECT
 public:
-    AudioInput(QObject *parent = 0);
+    AudioInput(QVariantMap params, QObject *parent = 0);
     ~AudioInput();
 
     void setFilePath(const QString &filePath);
@@ -20,7 +20,7 @@ public slots:
     void handleStateChanged(QAudio::State);
 private:
     QFile file;
-  
+
     QAudioFormat format;
     QAudioDeviceInfo info;
 

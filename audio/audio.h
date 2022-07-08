@@ -20,7 +20,7 @@ public:
     ~Audio();
 
     void invokeInitialize();
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
     /**
      * @brief start 播放音频
@@ -28,7 +28,7 @@ public:
      * @return 成功则返回
      *         失败则返回错误码
      */
-    void start(QString callbackID, QVariantMap params);
+    void start(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief pause 暂停音频
@@ -36,7 +36,7 @@ public:
      * @return 成功则无返回
      *         失败则返回错误码
      */
-    void pause(QString callbackID, QVariantMap params);
+    void pause(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief resume 继续音频
@@ -44,7 +44,7 @@ public:
      * @return 成功则无返回
      *         失败则返回错误码
      */
-    void resume(QString callbackID, QVariantMap params);
+    void resume(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief stop 结束播放音频
@@ -52,7 +52,7 @@ public:
      * @return 成功则无返回
      *         失败则返回错误码
      */
-    void stop(QString callbackID, QVariantMap params);
+    void stop(const QString &callbackID, const QVariantMap &params);
 
 private :
     QMediaPlayer *player;

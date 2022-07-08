@@ -20,10 +20,11 @@ public:
     ~Vibrator();
 
     void invokeInitialize();
-    void invoke(QString callbackID, QString action, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &action, const QVariantMap &params);
 
 private :
     long globalCallbackID;
+    static bool vibratorState;
 
     /**
      * @brief changeCameraImagePath 触发震动
@@ -31,7 +32,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void vibrate(QString callbackID, QVariantMap params);
+    void vibrate(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief changeCameraImagePath 查询震动设置
@@ -39,7 +40,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void vibrateInfo(QString callbackID, QVariantMap params);
+    void vibrateInfo(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief changeCameraImagePath 设置物理按键是否震动。
@@ -47,7 +48,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void setTouchVibrationSoundEnabled(QString callbackID, QVariantMap params);
+    void setTouchVibrationSoundEnabled(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief changeCameraImagePath 设置键盘按键震动是否开启。
@@ -55,7 +56,7 @@ private :
      * @return 成功则无返回。
      *      失败则返回错误码。
      */
-    void setVibratingEnabled(QString callbackID, QVariantMap params);
+    void setVibratingEnabled(const QString &callbackID, const QVariantMap &params);
 
     CNgfManager *client;
     CSystemProfileManager *profile;

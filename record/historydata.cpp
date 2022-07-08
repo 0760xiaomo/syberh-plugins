@@ -67,7 +67,7 @@ bool HistoryData::createConnection() {
     return true;
 }
 
-bool HistoryData::checkOrCreateDir(QString path){
+bool HistoryData::checkOrCreateDir(const QString &path){
     qDebug() << Q_FUNC_INFO << "checkOrCreateDir" << endl;
     QDir __dir;
     bool m_overwritePermission = true;
@@ -95,7 +95,7 @@ bool HistoryData::checkOrCreateDir(QString path){
     return true;
 }
 
-void HistoryData::insertMetadata(QString path,int size,int duration,QString created){
+void HistoryData::insertMetadata(const QString &path, int size, int duration, const QString &created){
     qDebug() << Q_FUNC_INFO << "insertMetadata" << endl;
 
     if (!createConnection()) {
@@ -113,7 +113,7 @@ void HistoryData::insertMetadata(QString path,int size,int duration,QString crea
     myConnection.close();
 }
 
-void HistoryData::removeMetadata(QString path) {
+void HistoryData::removeMetadata(const QString &path) {
     qDebug() << Q_FUNC_INFO << "removeMetadata" << endl;
 
     if (!createConnection()) {
@@ -130,7 +130,7 @@ void HistoryData::removeMetadata(QString path) {
     myConnection.close();
 }
 
-void HistoryData::updateMetadata(QString path,int size,int duration){
+void HistoryData::updateMetadata(const QString &path, int size, int duration){
     qDebug() << Q_FUNC_INFO << "updateDuration" << endl;
 
     if (!createConnection()) {

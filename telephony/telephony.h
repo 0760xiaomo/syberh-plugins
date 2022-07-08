@@ -15,7 +15,7 @@ class TELEPHONYSHARED_EXPORT Telephony: public ExtensionSystem::IPlugin
 public:
     Telephony();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 };
 

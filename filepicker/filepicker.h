@@ -21,9 +21,9 @@ public:
     ~Filepicker();
 
     void invokeInitialize();
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
-    void open(QString callbackID, QVariantMap params);
+    void open(const QString &callbackID, const QVariantMap &params);
 
 private:
     long globalCallbackID;
@@ -31,7 +31,7 @@ private:
     QmlObject *filepickerQml = nullptr;
 
 public slots:
-    void chooseOk(QString filesPath);
+    void chooseOk(const QString &filesPath);
     void chooseCancel();
 };
 

@@ -14,6 +14,7 @@ DEFINES += UPDATE_LIBRARY
 SOURCES += update.cpp
 
 HEADERS += update.h\
+        update_p.h \
         update_global.h
 
 CONFIG += link_pkgconfig

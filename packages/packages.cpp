@@ -9,7 +9,7 @@ Packages::Packages()
 {
 }
 
-void Packages::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Packages::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -44,7 +44,7 @@ void Packages::invoke(QString callbackID, QString actionName, QVariantMap params
     }
 }
 
-void Packages::openUrl(QString callbackID, QString scheme, QString path, QVariantMap params){
+void Packages::openUrl(const QString &callbackID, const QString &scheme, const QString &path, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "scheme:" << scheme << path << params;
     using namespace SYBEROS;
 
@@ -62,20 +62,20 @@ void Packages::openUrl(QString callbackID, QString scheme, QString path, QVarian
     if (schemeList.value(1).indexOf("openPage") >= 0) {
         openPage(callbackID, scheme, path, params);
     } else {
-        qApp->openUrl(scheme + path);
+        qApp->openUrl(scheme);
         signalManager()->success(callbackID.toLong(), "success");
     }
 }
 
-void Packages::openPage(QString callbackID, QString scheme, QString path, QVariantMap params){
+void Packages::openPage(const QString &callbackID, const QString &scheme, const QString &path, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "scheme:" << scheme << path << params;
     using namespace SYBEROS;
 
     //遍历params拼接成key=value&key=value格式
     QString paramStr = "";
-    QMap<QString, QVariant>::Iterator it = params.begin();
+    QMap<QString, QVariant>::const_iterator it = params.constBegin();
     int i = 0;
-    while(it != params.end()) {
+    while(it != params.constEnd()) {
         if (i > 0) {
             paramStr.append("&");
         }
@@ -89,19 +89,20 @@ void Packages::openPage(QString callbackID, QString scheme, QString path, QVaria
     //如果路径包含多个?，提示路径错误
     QStringList list = path.split("?");
 
+    QString openPath;
     if (list.size() == 1) {
-        path = path + "?" + paramStr;
+        openPath = path + "?" + paramStr;
     } else {
-        path = path + "&" + paramStr;
+        openPath = path + "&" + paramStr;
     }
-    path = scheme + "/" + path;
+    openPath = scheme + "/" + openPath;
     //唤起APP
-    qDebug() << "唤起APP的路径: " << path << endl;
-    qApp->openUrl(path);
+    qDebug() << "唤起APP的路径: " << openPath << endl;
+    qApp->openUrl(openPath);
     signalManager()->success(callbackID.toLong(), "success");
 }
 
-void Packages::openByUrl(QString url) {
+void Packages::openByUrl(const QString &url) {
     qDebug() << Q_FUNC_INFO << "  url:" << url;
 
     //url格式为: scheme://openPage/index.html?key=value&key=value
@@ -158,8 +159,8 @@ void Packages::openByUrl(QString url) {
     signalManager()->subscribe("Packages", result);
 }
 
-void Packages::openDocument(QString callbackID, QString sopId, QString uiappId,
-                  QString action, QString path, QVariantMap params){
+void Packages::openDocument(const QString &callbackID, const QString &sopId, const QString &uiappId,
+                  const QString &action, const QString &path, const QVariantMap &params){
 
     qDebug() << Q_FUNC_INFO << "  params:" << callbackID << sopId << uiappId << action << path << params;
     using namespace SYBEROS;
@@ -186,10 +187,9 @@ void Packages::openDocument(QString callbackID, QString sopId, QString uiappId,
         return;
     }
 
-    params.insert("action", action);
     QVariantMap pathParam;
-    QVariantMap::Iterator it = params.begin();
-    while(it != params.end())
+    QVariantMap::const_iterator it = params.constBegin();
+    while(it != params.constEnd())
     {
         if(it.key() == "filePath" || it.key() == "mimeType"){
             it++;
@@ -198,15 +198,16 @@ void Packages::openDocument(QString callbackID, QString sopId, QString uiappId,
         pathParam.insert(it.key(), it.value().toString());
         it++;
     }
-    path = convertParamToUrl(path, pathParam);
-    action = path;
-    qDebug() << "openDocument request: " << action << endl;
+    pathParam.insert("action", action);
 
-    qApp->runDocument(sopId, uiappId, action, mimeType, filePath);
+    QString newPath = convertParamToUrl(path, pathParam);
+    qDebug() << "openDocument request: " << newPath << endl;
+
+    qApp->runDocument(sopId, uiappId, newPath, mimeType, filePath);
     signalManager()->success(callbackID.toLong(), "success");
 }
 
-void Packages::openByDocument(QString action, QString mimetype, QString filePath){
+void Packages::openByDocument(const QString &action, const QString &mimetype, const QString &filePath){
     qDebug() << Q_FUNC_INFO << "  params:" << action << mimetype << filePath;
 
     QString path = action;
@@ -237,13 +238,13 @@ void Packages::openByDocument(QString action, QString mimetype, QString filePath
     signalManager()->subscribe("Packages", result);
 }
 
-QString Packages::convertParamToUrl(QString url, QVariantMap paramMap){
+QString Packages::convertParamToUrl(const QString &url, const QVariantMap &paramMap){
 
-    QMap<QString, QVariant>::Iterator it = paramMap.begin();
+    QMap<QString, QVariant>::const_iterator it = paramMap.constBegin();
 
     QString paramStr;
     int i = 0;
-    while(it != paramMap.end()) {
+    while(it != paramMap.constEnd()) {
         if (i > 0) {
             paramStr.append("&");
         }
@@ -254,15 +255,16 @@ QString Packages::convertParamToUrl(QString url, QVariantMap paramMap){
         i++;
     }
 
+    QString newUrl;
     if(url.indexOf("?") > -1){
-        url = url + "&" + paramStr;
+        newUrl = url + "&" + paramStr;
     }else{
-        url = url + "?" + paramStr;
+        newUrl = url + "?" + paramStr;
     }
-    return url;
+    return newUrl;
 }
 
-QVariantMap Packages::parseUrlToParam(QString url, QVariantMap paramMap){
+QVariantMap Packages::parseUrlToParam(const QString &url, QVariantMap paramMap){
     if (url.isEmpty()) {
         return paramMap;
     }

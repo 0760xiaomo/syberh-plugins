@@ -3,19 +3,13 @@
 
 #include <QObject>
 #include <QtPlugin>
-#include <QNetworkAccessManager>
 
+#include "network_p.h"
 #include "iplugin/iplugin.h"
 #include "network_global.h"
 
 
-class TaskInfo
-{
-public:
-    QString dataType;
-    QNetworkReply* reply;
-
-};
+class NetworkTasks;
 
 class NETWORKSHARED_EXPORT Network: public ExtensionSystem::IPlugin
 {
@@ -26,16 +20,14 @@ public:
     Network();
     ~Network();
 
-    void invokeInitialize();
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
-    QNetworkAccessManager *manager;
+    QScopedPointer<NetworkTasks> m_networkTasks;
 
-    QMap<QString,TaskInfo*> tasks; 
-    
 public slots:
-    void finished(QNetworkReply *reply);
+    void finished(const QString &callbackID, const NetworkResponse &response);
+    void error(const QString &callbackID, const QString &err);
 };
 
 #endif // NETWORK_H

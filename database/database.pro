@@ -12,10 +12,12 @@ TEMPLATE = lib
 
 DEFINES += DATABASE_LIBRARY
 
-SOURCES += database.cpp
+SOURCES += database.cpp \
+        database_p.cpp
 
 HEADERS += database.h\
-        database_global.h
+        database_global.h \
+        database_p.h
 
 CONFIG += link_pkgconfig
 CONFIG += C++11

@@ -15,7 +15,7 @@ class FILEMANAGERSHARED_EXPORT FileManager : public ExtensionSystem::IPlugin
 public:
     FileManager();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
    
@@ -25,27 +25,27 @@ private :
      * @param srcPath       源路径
      * @param destPath      目标路径
      */
-    void move(QString callbackID, QString srcPath, QString destPath);
+    void move(const QString &callbackID, const QString &srcPath, const QString &destPath);
     /**
      * @brief copy          复制
      * @param callBackID
      * @param srcPath       源路径
      * @param destPath      目标路径
      */
-    void copy(QString callbackID, QString srcPath, QString destPath);
+    void copy(const QString &callbackID, const QString &srcPath, const QString &destPath);
     /**
      * @brief fileList      获取文件列表
      * @param callBackID
      * @param srcPath       源路径
      */
-    void fileList(QString callbackID, QString srcPath);
+    void fileList(const QString &callbackID, const QString &srcPath);
 
     /**
      * @brief getInfo       获取文件信息
      * @param callBackID
      * @param srcPath       源路径
      */
-    void getInfo(QString callbackID, QString srcPath);
+    void getInfo(const QString &callbackID, const QString &srcPath);
 
     /**
      * @brief remove        删除
@@ -53,7 +53,7 @@ private :
      * @param srcPath       源路径
      * @param recursive     递归删除 0：否，1：是
      */
-    void remove(QString callbackID, QString srcPath, int recursive);
+    void remove(const QString &callbackID, const QString &srcPath, int recursive);
 
 };
 

@@ -26,7 +26,7 @@ System::System()
 }
 
 
-void System::invoke(QString callbackID, QString actionName, QVariantMap params)
+void System::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
 
@@ -34,19 +34,15 @@ void System::invoke(QString callbackID, QString actionName, QVariantMap params)
 
     if (actionName == "aboutPhone") {
         aboutPhone(callbackID, params);
-    }
-
-     if (actionName == "setDate") {
+    }else if (actionName == "setDate") {
         setDate(callbackID, params);
-    }
-    
-     if (actionName == "captureScreen") {
+    }else if (actionName == "captureScreen") {
         captureScreen(callbackID, params);
     }
 }
 
 
-void System::aboutPhone(QString callbackID,QVariantMap params){
+void System::aboutPhone(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(callbackID);
     Q_UNUSED(params);
     int modem = 0;
@@ -62,7 +58,6 @@ void System::aboutPhone(QString callbackID,QVariantMap params){
     COsInfo info;
     QJsonValue kernelVersion = QJsonValue::fromVariant(info.kernelVersion());
     QJsonValue osVersion = QJsonValue::fromVariant(info.osVersion());
-    QJsonValue osVersionCode = QJsonValue::fromVariant(info.osVersionCode());
     QJsonValue softwareVersion = QJsonValue::fromVariant(info.softwareVersion());
     QScreen *screen = QGuiApplication::primaryScreen();
     QRect mm = screen->availableGeometry() ;
@@ -85,7 +80,6 @@ void System::aboutPhone(QString callbackID,QVariantMap params){
     jsonObject.insert("osType", "Syber");//操作系统名称
     jsonObject.insert("osVersionName", softwareVersion);//操作系统版本名称
     jsonObject.insert("osVersion", osVersion);//操作系统版本号
-    jsonObject.insert("osVersionCode", osVersionCode);//操作系统小版本号
     jsonObject.insert("platformVersionName", "");//运行平台版本名称
     jsonObject.insert("platformVersionCode", "");//运行平台版本号
     jsonObject.insert("kernelVersion", kernelVersion);//内核版本号
@@ -105,54 +99,22 @@ void System::aboutPhone(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(jsonObject));
 }
 
-
-void System::setVirtualPanel(QString callbackID,QVariantMap params){
-    Q_UNUSED(callbackID);
-    Q_UNUSED(params);
-
-    qDebug() << Q_FUNC_INFO << "callbackID:" << callbackID << ", params: " << params << endl;
-    
-    bool visible= params.value("visible").toBool();
-    QDBusMessage dbusMessage = QDBusMessage::createMethodCall(COMPOSITOR_SERVICE_NAME,
-                                                              COMPOSITOR_OBJECT_PATH,
-                                                              COMPOSITOR_INTERFACE_NAME,
-                                                              "setVirtualPanelVisible");
-    dbusMessage << visible;
-    qDebug() << QDBusConnection::systemBus().send(dbusMessage);
-
-
-
-    QJsonObject jsonObject;
-    jsonObject.insert("visible", visible);
-   
-    
-    QJsonValue jsonObjectValue = QJsonValue::fromVariant(jsonObject);
-
-    qDebug() << Q_FUNC_INFO << "jsonObject:" << jsonObject << ", jsonObjectValue: " << jsonObjectValue << endl;
-
-    signalManager()->success(callbackID.toLong(), QVariant(jsonObject));
-}
-
-
-void System::setDate(QString callbackID,QVariantMap params){
+void System::setDate(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(callbackID);
     Q_UNUSED(params);
 
     qDebug() << Q_FUNC_INFO << "callbackID:" << callbackID << ", params: " << params << endl;
      QString date = params.value("date").toString();
-   
-    QDBusMessage dbusMessage = QDBusMessage::createMethodCall(COMPOSITOR_SERVICE_NAME,
-                                                              COMPOSITOR_OBJECT_PATH,
-                                                              COMPOSITOR_INTERFACE_NAME,
-                                                              "setTime");
+
     QDateTime dt = QDateTime::fromString(date, "yyyy-MM-dd hh:mm:ss");
     qDebug() << "time " << dt.toString();
-    dbusMessage << dt.toString();
-    qDebug() << QDBusConnection::systemBus().send(dbusMessage);
+
+    CTime time;
+    time.setTime(dt);
 
     QJsonObject jsonObject;
     jsonObject.insert("date", date);
-    
+
     QJsonValue jsonObjectValue = QJsonValue::fromVariant(jsonObject);
 
     qDebug() << Q_FUNC_INFO << "jsonObject:" << jsonObject << ", jsonObjectValue: " << jsonObjectValue << endl;
@@ -160,7 +122,7 @@ void System::setDate(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(jsonObject));
 }
 
-void System::captureScreen(QString callbackID,QVariantMap params){
+void System::captureScreen(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(callbackID);
     Q_UNUSED(params);
 
@@ -180,7 +142,7 @@ void System::captureScreen(QString callbackID,QVariantMap params){
 }
 
 
-void System::getResolution(QString callbackID,QVariantMap params){
+void System::getResolution(const QString &callbackID, const QVariantMap &params){
 
     Q_UNUSED(params);
     QScreen *screen = QGuiApplication::primaryScreen();
@@ -196,7 +158,7 @@ void System::getResolution(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(screenObj));
 }
 
-void System::getCoreVersion(QString callbackID,QVariantMap params){
+void System::getCoreVersion(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(params);
     COsInfo info;
     QString version = info.kernelVersion();
@@ -204,7 +166,7 @@ void System::getCoreVersion(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(version));
 }
 
-void System::getSysVersionID(QString callbackID,QVariantMap params){
+void System::getSysVersionID(const QString &callbackID, const QVariantMap &params){
     Q_UNUSED(params);
     COsInfo info;
     QString version = info.osVersion();

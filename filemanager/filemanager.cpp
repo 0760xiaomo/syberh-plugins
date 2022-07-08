@@ -16,7 +16,7 @@ FileManager::FileManager()
 }
 
 
-void FileManager::invoke(QString callbackID, QString actionName, QVariantMap params)
+void FileManager::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
     if (actionName == "move") {
@@ -33,7 +33,7 @@ void FileManager::invoke(QString callbackID, QString actionName, QVariantMap par
     }
 }
 
-void FileManager::move(QString callbackID, QString srcPath, QString destPath) {
+void FileManager::move(const QString &callbackID, const QString &srcPath, const QString &destPath) {
     RespResult resp = FileUtil::move(srcPath, destPath);
     if (resp.flag) {
         QJsonObject jsonObj;
@@ -43,7 +43,7 @@ void FileManager::move(QString callbackID, QString srcPath, QString destPath) {
         signalManager()->failed(callbackID.toLong(), resp.code, resp.msg);
     }
 }
-void FileManager::copy(QString callbackID, QString srcPath, QString destPath) {
+void FileManager::copy(const QString &callbackID, const QString &srcPath, const QString &destPath) {
     RespResult resp = FileUtil::copy(srcPath, destPath);
 
     if (resp.flag) {
@@ -55,7 +55,7 @@ void FileManager::copy(QString callbackID, QString srcPath, QString destPath) {
     }
 
 }
-void FileManager::fileList(QString callbackID, QString srcPath) {
+void FileManager::fileList(const QString &callbackID, const QString &srcPath) {
     QFileInfoList fileInfos = FileUtil::fileList(srcPath);
     QJsonArray jsonArr;
     if (fileInfos.size() != 0) {
@@ -75,7 +75,7 @@ void FileManager::fileList(QString callbackID, QString srcPath) {
     signalManager()->success(callbackID.toLong(), jsonArr);
 }
 
-void FileManager::getInfo(QString callbackID, QString srcPath) {
+void FileManager::getInfo(const QString &callbackID, const QString &srcPath) {
     FileInfo fileInfo = FileUtil::getInfo(srcPath);
     QJsonObject jsonObj;
     jsonObj.insert("created", fileInfo.created);
@@ -89,7 +89,7 @@ void FileManager::getInfo(QString callbackID, QString srcPath) {
     signalManager()->success(callbackID.toLong(), jsonObj);
 }
 
-void FileManager::remove(QString callbackID, QString srcPath, int recursive) {
+void FileManager::remove(const QString &callbackID, const QString &srcPath, int recursive) {
     RespResult resp = FileUtil::remove(srcPath, recursive);
 
     if (resp.flag) {

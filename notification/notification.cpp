@@ -15,7 +15,7 @@ Notification::Notification()
 }
 
 
-void Notification::invoke(QString callbackID, QString actionName, QVariantMap params)
+void Notification::invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params)
 {
     qDebug() << Q_FUNC_INFO << "  callbackID:" << callbackID << "actionName:" << actionName << "params:" << params;
     if (actionName == "badgeShow") {
@@ -29,7 +29,7 @@ void Notification::invoke(QString callbackID, QString actionName, QVariantMap pa
     }
 }
 
-void Notification::badgeShow(QString callbackID,QVariantMap params){
+void Notification::badgeShow(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "badgeShow" << params << endl;
     QString appId = params.value("appId").toString();
     long num = params.value("num").toInt();
@@ -40,7 +40,7 @@ void Notification::badgeShow(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Notification::sendNotification(QString callbackID,QVariantMap params){
+void Notification::sendNotification(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "sendNotification" << params << endl;
     long type = params.value("type").toInt();
     QString title = params.value("title").toString();
@@ -68,7 +68,7 @@ void Notification::sendNotification(QString callbackID,QVariantMap params){
     signalManager()->success(callbackID.toLong(), QVariant(jsonObject));
 }
 
-void Notification::removeAllNotifications(QString callbackID,QVariantMap params){
+void Notification::removeAllNotifications(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "removeAllNotifications" << params << endl;
 
     CNotificationManager notificationManager;
@@ -77,7 +77,7 @@ void Notification::removeAllNotifications(QString callbackID,QVariantMap params)
     signalManager()->success(callbackID.toLong(), true);
 }
 
-void Notification::removeNotification(QString callbackID,QVariantMap params){
+void Notification::removeNotification(const QString &callbackID, const QVariantMap &params){
     qDebug() << Q_FUNC_INFO << "removeNotification" << params << endl;
     QString updateId = params.value("updateId").toString();
 

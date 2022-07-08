@@ -15,7 +15,7 @@ class CELLULARSHARED_EXPORT Cellular: public ExtensionSystem::IPlugin
 public:
     Cellular();
 
-    void invoke(QString callbackID, QString actionName, QVariantMap params);
+    void invoke(const QString &callbackID, const QString &actionName, const QVariantMap &params);
 
 private :
     /**
@@ -25,7 +25,7 @@ private :
      * @return 设置成功返回 true
      * @return 设置失败返回 false
      */
-    void  networkDisabled(QString callbackID, QVariantMap params);
+    void  networkDisabled(const QString &callbackID, const QVariantMap &params);
 
     /**
      * @brief aboutPhone 设置数据网络状态为启用
@@ -34,7 +34,7 @@ private :
      * @return 设置成功返回 true
      * @return 设置失败返回 false
      */
-    void  networkEnabled(QString callbackID, QVariantMap params);
+    void  networkEnabled(const QString &callbackID, const QVariantMap &params);
 };
 
 
